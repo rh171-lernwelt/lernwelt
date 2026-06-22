@@ -1,0 +1,804 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pauls Strom-Quiz ⚡</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700;800&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg1:#eaf2ff; --bg2:#ffffff;
+    --ink:#16244a; --muted:#5b6b8c;
+    --blue:#2f6bff; --blue-d:#1f4fd0;
+    --yellow:#ffd21e; --yellow-d:#f2b705;
+    --green:#22c55e; --green-d:#16a34a;
+    --red:#ef4444;
+    --card:#ffffff; --line:#e3ebfb;
+    --shadow:0 10px 30px rgba(31,79,208,.12);
+    --r:22px;
+    --disp:'Baloo 2', system-ui, sans-serif;
+    --body:'Nunito', system-ui, sans-serif;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{margin:0;padding:0}
+  body{
+    font-family:var(--body); color:var(--ink);
+    background:radial-gradient(1200px 600px at 50% -10%, #dceaff 0%, var(--bg1) 40%, var(--bg2) 100%);
+    min-height:100vh; padding:14px 14px 40px;
+  }
+  .wrap{max-width:560px;margin:0 auto}
+
+  /* ---------- Top bar ---------- */
+  .topbar{
+    background:linear-gradient(135deg,var(--blue),#5b8bff);
+    color:#fff;border-radius:var(--r);padding:14px 16px;box-shadow:var(--shadow);
+    position:relative;overflow:hidden;
+  }
+  .topbar::after{content:"⚡";position:absolute;right:-6px;top:-14px;font-size:90px;opacity:.14;transform:rotate(12deg)}
+  .tb-row{display:flex;align-items:center;gap:12px}
+  .rankbadge{font-size:30px;width:52px;height:52px;border-radius:16px;background:rgba(255,255,255,.18);display:grid;place-items:center;flex:none}
+  .tb-info{flex:1;min-width:0}
+  .tb-hi{font-family:var(--disp);font-weight:800;font-size:19px;line-height:1.1}
+  .tb-rank{font-size:13px;opacity:.95;font-weight:700}
+  .lvl-pill{background:#fff;color:var(--blue-d);font-family:var(--disp);font-weight:800;border-radius:14px;padding:6px 12px;font-size:14px;white-space:nowrap}
+  /* charge meter */
+  .charge{margin-top:12px}
+  .charge-track{height:16px;background:rgba(255,255,255,.25);border-radius:999px;overflow:hidden;position:relative}
+  .charge-fill{height:100%;width:0;background:linear-gradient(90deg,var(--yellow),#fff4b0);border-radius:999px;transition:width .6s cubic-bezier(.2,.8,.2,1);box-shadow:0 0 10px rgba(255,210,30,.8)}
+  .charge-lbl{display:flex;justify-content:space-between;font-size:11px;font-weight:700;margin-top:5px;opacity:.95}
+
+  /* ---------- Buttons / cards ---------- */
+  .btn{font-family:var(--disp);font-weight:800;border:none;border-radius:16px;padding:15px 18px;font-size:17px;cursor:pointer;transition:transform .08s, box-shadow .15s;width:100%}
+  .btn:active{transform:translateY(2px)}
+  .btn-primary{background:linear-gradient(135deg,var(--yellow),var(--yellow-d));color:#3a2a00;box-shadow:0 6px 0 #d29a00}
+  .btn-primary:active{box-shadow:0 2px 0 #d29a00}
+  .btn-ghost{background:#fff;color:var(--blue-d);border:2px solid var(--line)}
+
+  .menu{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:14px}
+  .mcard{background:var(--card);border-radius:var(--r);padding:16px;box-shadow:var(--shadow);cursor:pointer;border:2px solid transparent;transition:transform .1s,border-color .15s;text-align:left}
+  .mcard:active{transform:scale(.97)}
+  .mcard .ic{font-size:30px}
+  .mcard .t{font-family:var(--disp);font-weight:800;font-size:16px;margin-top:6px}
+  .mcard .s{font-size:12px;color:var(--muted);font-weight:600;margin-top:2px}
+  .mcard.wide{grid-column:1 / -1;display:flex;align-items:center;gap:14px}
+  .mcard.wide .ic{font-size:34px}
+  .mcard.wide .txt{flex:1}
+
+  .section{display:none;animation:fade .25s ease}
+  .section.active{display:block}
+  @keyframes fade{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+
+  .panel{background:var(--card);border-radius:var(--r);padding:18px;box-shadow:var(--shadow);margin-top:14px}
+  .back{display:inline-flex;align-items:center;gap:6px;background:none;border:none;color:var(--blue-d);font-family:var(--disp);font-weight:800;font-size:15px;cursor:pointer;padding:6px 0;margin-top:10px}
+
+  .h-title{font-family:var(--disp);font-weight:800;font-size:22px;margin:4px 0 0}
+  .h-sub{color:var(--muted);font-weight:700;font-size:13px}
+
+  /* difficulty chips */
+  .chips{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap}
+  .chip{flex:1;min-width:90px;text-align:center;border-radius:14px;padding:12px 8px;font-family:var(--disp);font-weight:800;font-size:14px;cursor:pointer;border:2px solid var(--line);background:#fff;color:var(--ink)}
+  .chip[data-l="leicht"].on{background:#e7faec;border-color:var(--green);color:var(--green-d)}
+  .chip[data-l="mittel"].on{background:#fff6e0;border-color:var(--yellow-d);color:#9a6b00}
+  .chip[data-l="schwer"].on{background:#ffe9e9;border-color:var(--red);color:#b91c1c}
+  .chip[data-l="alle"].on{background:#e8efff;border-color:var(--blue);color:var(--blue-d)}
+
+  /* quiz */
+  .qmeta{display:flex;justify-content:space-between;align-items:center;color:var(--muted);font-weight:800;font-size:13px;margin-bottom:8px}
+  .qbadge{padding:3px 10px;border-radius:999px;font-size:12px}
+  .b-leicht{background:#e7faec;color:var(--green-d)}
+  .b-mittel{background:#fff6e0;color:#9a6b00}
+  .b-schwer{background:#ffe9e9;color:#b91c1c}
+  .qemoji{font-size:46px;text-align:center;margin:4px 0 6px}
+  .qtext{font-family:var(--disp);font-weight:800;font-size:20px;line-height:1.25;text-align:center;margin-bottom:14px}
+  .opts{display:grid;gap:10px}
+  .opt{background:#f5f8ff;border:2px solid var(--line);border-radius:16px;padding:14px 16px;font-family:var(--body);font-weight:800;font-size:16px;text-align:left;cursor:pointer;transition:transform .08s,background .15s,border-color .15s}
+  .opt:active{transform:scale(.98)}
+  .opt.correct{background:#e7faec;border-color:var(--green);color:var(--green-d)}
+  .opt.wrong{background:#ffe9e9;border-color:var(--red);color:#b91c1c}
+  .opt.dim{opacity:.55}
+  .explain{margin-top:14px;background:#eef4ff;border-left:5px solid var(--blue);border-radius:12px;padding:12px 14px;font-weight:700;font-size:14px;display:none}
+  .explain.show{display:block;animation:fade .2s}
+  .explain b{color:var(--blue-d)}
+  .qbar{height:8px;background:var(--line);border-radius:999px;overflow:hidden;margin-bottom:12px}
+  .qbar > div{height:100%;background:var(--blue);width:0;transition:width .3s}
+
+  .xpfloat{position:fixed;left:50%;top:30%;transform:translateX(-50%);font-family:var(--disp);font-weight:800;font-size:30px;color:var(--green-d);pointer-events:none;opacity:0}
+  .xpfloat.go{animation:xpup 1s ease forwards}
+  @keyframes xpup{0%{opacity:0;transform:translate(-50%,10px)}20%{opacity:1}100%{opacity:0;transform:translate(-50%,-50px)}}
+
+  /* lernpfad */
+  .path{display:grid;gap:12px;margin-top:14px}
+  .stage{background:#fff;border:2px solid var(--line);border-radius:18px;padding:14px;display:flex;align-items:center;gap:14px;cursor:pointer;box-shadow:var(--shadow)}
+  .stage.locked{opacity:.5;cursor:not-allowed}
+  .stage.done{border-color:var(--green)}
+  .stage .num{width:46px;height:46px;border-radius:14px;background:#eef4ff;display:grid;place-items:center;font-family:var(--disp);font-weight:800;font-size:22px;flex:none}
+  .stage.done .num{background:#e7faec}
+  .stage .st-t{font-family:var(--disp);font-weight:800;font-size:16px}
+  .stage .st-s{font-size:12px;color:var(--muted);font-weight:700}
+  .stars{margin-left:auto;font-size:16px;white-space:nowrap}
+
+  /* karteikarten */
+  .flip{perspective:1200px;margin-top:14px}
+  .flip-inner{position:relative;width:100%;min-height:230px;transition:transform .5s;transform-style:preserve-3d;cursor:pointer}
+  .flip.flipped .flip-inner{transform:rotateY(180deg)}
+  .face{position:absolute;inset:0;backface-visibility:hidden;border-radius:var(--r);padding:22px;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;box-shadow:var(--shadow)}
+  .front{background:linear-gradient(135deg,var(--blue),#5b8bff);color:#fff}
+  .front .fe{font-size:54px}
+  .front .ft{font-family:var(--disp);font-weight:800;font-size:24px;margin-top:8px}
+  .front .hint{position:absolute;bottom:12px;font-size:12px;opacity:.85;font-weight:700}
+  .back{background:#fff;color:var(--ink);transform:rotateY(180deg)}
+  .back .bt{font-weight:700;font-size:16px;line-height:1.4}
+  .cardnav{display:flex;gap:10px;margin-top:12px}
+  .cardnav .btn{flex:1}
+  .counter{text-align:center;color:var(--muted);font-weight:800;margin-top:10px;font-size:13px}
+
+  /* spiel */
+  .game-item{font-size:64px;text-align:center;margin:10px 0}
+  .game-name{font-family:var(--disp);font-weight:800;font-size:22px;text-align:center;margin-bottom:14px}
+  .game-btns{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .game-score{text-align:center;font-family:var(--disp);font-weight:800;font-size:15px;color:var(--muted);margin-top:12px}
+
+  /* urkunde */
+  .cert{background:#fffdf5;border:6px double var(--yellow-d);border-radius:18px;padding:26px 20px;text-align:center;position:relative;overflow:hidden}
+  .cert::before{content:"⚡";position:absolute;font-size:160px;opacity:.06;left:50%;top:46%;transform:translate(-50%,-50%)}
+  .cert .ce-top{font-family:var(--disp);font-weight:800;color:var(--blue-d);letter-spacing:1px;font-size:14px}
+  .cert .ce-h{font-family:var(--disp);font-weight:800;font-size:28px;margin:8px 0}
+  .cert .ce-name{font-family:var(--disp);font-weight:800;font-size:34px;color:var(--yellow-d);margin:6px 0;text-shadow:0 1px 0 #d29a00}
+  .cert .ce-line{font-weight:700;font-size:15px;margin:4px 0}
+  .cert .ce-rank{font-size:40px;margin:10px 0}
+  .cert .ce-foot{display:flex;justify-content:space-between;margin-top:18px;font-size:12px;color:var(--muted);font-weight:700}
+
+  .stat-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-top:12px}
+  .stat{background:#f5f8ff;border-radius:14px;padding:12px;text-align:center}
+  .stat .v{font-family:var(--disp);font-weight:800;font-size:22px;color:var(--blue-d)}
+  .stat .k{font-size:11px;color:var(--muted);font-weight:800;margin-top:2px}
+
+  .empty{text-align:center;color:var(--muted);font-weight:700;padding:24px 8px}
+  .empty .e{font-size:46px}
+
+  .toolbar{display:flex;gap:8px;margin-top:14px}
+  .toolbar .btn{flex:1}
+  .sound-toggle{position:absolute;right:14px;bottom:12px;background:rgba(255,255,255,.18);border:none;color:#fff;font-size:18px;width:38px;height:38px;border-radius:12px;cursor:pointer}
+
+  @media print{
+    body{background:#fff;padding:0}
+    .noprint{display:none !important}
+    .panel{box-shadow:none;margin:0}
+  }
+</style>
+</head>
+<body>
+<a href="index.html" id="hubHomeBtn" onclick="return hubGoHome(event)" aria-label="Zurueck zur Startseite">🏠 Startseite</a>
+<style>
+#hubHomeBtn{position:fixed;top:12px;left:12px;z-index:2147483600;display:inline-flex;align-items:center;gap:6px;text-decoration:none;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",system-ui,sans-serif;font-weight:700;font-size:14px;line-height:1;color:#1b1c22;background:rgba(255,255,255,.92);border:1px solid rgba(0,0,0,.08);border-radius:999px;padding:9px 14px;box-shadow:0 4px 14px rgba(20,22,40,.18);-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);cursor:pointer;}
+#hubHomeBtn:hover{background:#fff;}
+#hubHomeBtn:active{transform:translateY(1px);}
+#hubHomeBtn:focus-visible{outline:3px solid #9db4ff;outline-offset:2px;}
+@media print{#hubHomeBtn{display:none!important;}}
+</style>
+<script>function hubGoHome(e){if(e&&e.preventDefault)e.preventDefault();var u=null;try{u=localStorage.getItem("hub-url");}catch(x){}window.location.href=u||"index.html";return false;}</script>
+
+<div class="wrap">
+
+  <!-- TOP BAR -->
+  <div class="topbar">
+    <div class="tb-row">
+      <div class="rankbadge" id="rankIcon">⚡</div>
+      <div class="tb-info">
+        <div class="tb-hi">Hallo Paul! 👋</div>
+        <div class="tb-rank" id="rankName">Kleiner Funke</div>
+      </div>
+      <div class="lvl-pill">Level <span id="lvlNum">1</span></div>
+    </div>
+    <div class="charge">
+      <div class="charge-track"><div class="charge-fill" id="chargeFill"></div></div>
+      <div class="charge-lbl"><span id="xpNow">0 XP</span><span id="xpNext">noch 80 XP bis Level 2</span></div>
+    </div>
+    <button class="sound-toggle" id="soundBtn" title="Ton an/aus">🔊</button>
+  </div>
+
+  <!-- HOME -->
+  <div id="home" class="section active">
+    <div class="menu">
+      <div class="mcard wide" onclick="startQuiz('alle')">
+        <div class="ic">📝</div>
+        <div class="txt">
+          <div class="t">Quiz starten</div>
+          <div class="s">Beantworte Fragen und sammle Strom-XP ⚡</div>
+        </div>
+      </div>
+      <div class="mcard" onclick="show('lernpfad')">
+        <div class="ic">🗺️</div><div class="t">Lernpfad</div><div class="s">Schritt für Schritt</div>
+      </div>
+      <div class="mcard" onclick="openCards()">
+        <div class="ic">🃏</div><div class="t">Karteikarten</div><div class="s">Wichtige Begriffe</div>
+      </div>
+      <div class="mcard" onclick="openMistakes()">
+        <div class="ic">🔁</div><div class="t">Meine Fehler</div><div class="s" id="mistCount">0 zum Üben</div>
+      </div>
+      <div class="mcard" onclick="startGame()">
+        <div class="ic">🎮</div><div class="t">Leiter-Spiel</div><div class="s">Leitet das Strom?</div>
+      </div>
+      <div class="mcard wide" onclick="openCert()">
+        <div class="ic">🏆</div>
+        <div class="txt"><div class="t">Meine Urkunde</div><div class="s">Zum Ausdrucken & Aufhängen</div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- QUIZ -->
+  <div id="quiz" class="section">
+    <div class="panel">
+      <div class="qbar"><div id="qprog"></div></div>
+      <div class="qmeta">
+        <span>Frage <span id="qIdx">1</span>/<span id="qTotal">10</span></span>
+        <span class="qbadge" id="qBadge">leicht</span>
+      </div>
+      <div class="qemoji" id="qEmoji">⚡</div>
+      <div class="qtext" id="qText">…</div>
+      <div style="text-align:center;margin:-2px 0 10px"><button type="button" class="noprint" onclick="fxSpeak()" title="Frage vorlesen" style="background:#eef4ff;border:1px solid #d7e3ff;border-radius:999px;padding:6px 14px;font-size:14px;font-weight:600;color:#2b59c3;cursor:pointer">🗣️ Vorlesen</button></div>
+      <div class="opts" id="qOpts"></div>
+      <div class="explain" id="qExplain"></div>
+      <button class="btn btn-primary noprint" id="nextBtn" style="margin-top:14px;display:none" onclick="nextQuestion()">Weiter →</button>
+    </div>
+    <button class="back noprint" onclick="confirmHome()">← Zurück zum Start</button>
+  </div>
+
+  <!-- QUIZ RESULT -->
+  <div id="result" class="section">
+    <div class="panel" style="text-align:center">
+      <div style="font-size:60px" id="resEmoji">🎉</div>
+      <div class="h-title" id="resTitle">Super gemacht!</div>
+      <div class="h-sub" id="resSub"></div>
+      <div class="stat-grid">
+        <div class="stat"><div class="v" id="resRight">0</div><div class="k">Richtig</div></div>
+        <div class="stat"><div class="v" id="resWrong">0</div><div class="k">Falsch</div></div>
+        <div class="stat"><div class="v" id="resXp">0</div><div class="k">XP</div></div>
+      </div>
+      <div class="toolbar">
+        <button class="btn btn-primary" onclick="startQuiz('alle')">Nochmal ⚡</button>
+        <button class="btn btn-ghost" onclick="show('home')">Start</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- LERNPFAD -->
+  <div id="lernpfad" class="section">
+    <div class="panel">
+      <div class="h-title">🗺️ Lernpfad</div>
+      <div class="h-sub">Schließe eine Station ab, um die nächste freizuschalten.</div>
+      <div class="path" id="pathList"></div>
+    </div>
+    <button class="back" onclick="show('home')">← Zurück zum Start</button>
+  </div>
+
+  <!-- KARTEIKARTEN -->
+  <div id="cards" class="section">
+    <div class="panel">
+      <div class="h-title">🃏 Karteikarten</div>
+      <div class="h-sub">Tippe die Karte an, um die Antwort zu sehen.</div>
+      <div class="flip" id="flipCard" onclick="flipCard()">
+        <div class="flip-inner">
+          <div class="face front">
+            <div class="fe" id="cardEmoji">⚡</div>
+            <div class="ft" id="cardFront">…</div>
+            <div class="hint">Antippen zum Umdrehen 👆</div>
+          </div>
+          <div class="face back">
+            <div class="bt" id="cardBack">…</div>
+          </div>
+        </div>
+      </div>
+      <div class="counter"><span id="cardIdx">1</span> / <span id="cardTotal">12</span></div>
+      <div class="cardnav">
+        <button class="btn btn-ghost" onclick="prevCard(event)">← Zurück</button>
+        <button class="btn btn-primary" onclick="nextCard(event)">Nächste →</button>
+      </div>
+    </div>
+    <button class="back" onclick="show('home')">← Zurück zum Start</button>
+  </div>
+
+  <!-- FEHLER -->
+  <div id="mistakes" class="section">
+    <div class="panel" id="mistPanel"></div>
+    <button class="back" onclick="show('home')">← Zurück zum Start</button>
+  </div>
+
+  <!-- SPIEL -->
+  <div id="game" class="section">
+    <div class="panel">
+      <div class="h-title">🎮 Leiter oder Nichtleiter?</div>
+      <div class="h-sub">Leitet dieser Gegenstand den Strom?</div>
+      <div class="game-item" id="gameItem">🥄</div>
+      <div class="game-name" id="gameName">Metalllöffel</div>
+      <div class="game-btns">
+        <button class="btn btn-primary" onclick="guess(true)">⚡ Leitet Strom</button>
+        <button class="btn btn-ghost" onclick="guess(false)">🚫 Leitet NICHT</button>
+      </div>
+      <div class="game-score" id="gameScore">Punkte: 0 · Reihe: 0</div>
+    </div>
+    <button class="back" onclick="show('home')">← Zurück zum Start</button>
+  </div>
+
+  <!-- URKUNDE -->
+  <div id="cert" class="section">
+    <div class="panel">
+      <div class="cert" id="certBox">
+        <div class="ce-top">⚡ STROM-EXPERTEN-URKUNDE ⚡</div>
+        <div class="ce-h">Diese Urkunde gehört</div>
+        <div class="ce-name">Paul</div>
+        <div class="ce-rank" id="certRankIcon">⚡</div>
+        <div class="ce-line">Rang: <b id="certRank">Kleiner Funke</b></div>
+        <div class="ce-line">Level <b id="certLvl">1</b> · <b id="certXp">0</b> XP gesammelt</div>
+        <div class="ce-line" id="certRight">0 Fragen richtig beantwortet</div>
+        <div class="ce-foot"><span>Thema: Strom & Elektrizität</span><span id="certDate"></span></div>
+      </div>
+      <div class="toolbar noprint">
+        <button class="btn btn-primary" onclick="window.print()">🖨️ Drucken</button>
+        <button class="btn btn-ghost" onclick="show('home')">Start</button>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<div class="xpfloat" id="xpFloat">+10 XP</div>
+
+<script>
+/* ============ DATEN ============ */
+const QUESTIONS = [
+  // ---- LEICHT ----
+  {e:"💡",l:"leicht",t:"Stromkreis",q:"Was brauchen viele Geräte, damit sie funktionieren?",o:["Strom","Wasser","Luft","Sand"],c:0,x:"Viele Geräte brauchen <b>elektrische Energie</b> – also Strom."},
+  {e:"🔦",l:"leicht",t:"Stromquelle",q:"Womit kann man eine kleine Taschenlampe betreiben?",o:["Mit einer Batterie","Mit Sand","Mit Wasser","Mit Papier"],c:0,x:"Eine <b>Batterie</b> ist eine Stromquelle. Sie liefert den Strom für die Taschenlampe."},
+  {e:"💡",l:"leicht",t:"Verbraucher",q:"Was leuchtet, wenn Strom hindurchfließt?",o:["Die Glühlampe","Der Stein","Das Holz","Das Papier"],c:0,x:"Eine <b>Glühlampe</b> ist ein Verbraucher. Fließt Strom durch sie, leuchtet sie."},
+  {e:"🔘",l:"leicht",t:"Schalter",q:"Was macht ein Schalter?",o:["Er schaltet den Strom an und aus","Er macht Musik","Er gibt Wärme","Er leuchtet immer"],c:0,x:"Mit dem <b>Schalter</b> kannst du den Strom an- und ausschalten."},
+  {e:"🥄",l:"leicht",t:"Leiter",q:"Welches Material leitet Strom besonders gut?",o:["Metall","Holz","Plastik","Gummi"],c:0,x:"<b>Metall</b> leitet den Strom sehr gut. Deshalb sind Kabel innen aus Metall."},
+  {e:"🔌",l:"leicht",t:"Stromnetz",q:"Worüber kommt der Strom in deine Wohnung?",o:["Über Leitungen und die Steckdose","Über das Fenster","Über die Heizung","Über den Wasserhahn"],c:0,x:"Der Strom kommt über <b>Leitungen</b> ins Haus und dann aus der <b>Steckdose</b>."},
+  {e:"🔁",l:"leicht",t:"Stromkreis",q:"Wie nennt man den Weg, auf dem der Strom fließt?",o:["Stromkreis","Fußweg","Wasserweg","Luftweg"],c:0,x:"Der Strom fließt im Kreis – das nennt man <b>Stromkreis</b>."},
+  {e:"⚠️",l:"leicht",t:"Sicherheit",q:"Was darf man NIEMALS in eine Steckdose stecken?",o:["Finger oder Gegenstände","Den Stecker","Ein Ladekabel","Eine Lampe"],c:0,x:"Niemals Finger oder Dinge in die Steckdose stecken – das ist sehr <b>gefährlich</b>!"},
+  {e:"💧",l:"leicht",t:"Sicherheit",q:"Was ist zusammen mit Strom besonders gefährlich?",o:["Wasser","Sand","Brot","Papier"],c:0,x:"<b>Wasser</b> leitet Strom. Strom und Wasser zusammen sind gefährlich."},
+  {e:"🌩️",l:"leicht",t:"Natur",q:"Welches Wetter-Ereignis ist eigentlich auch Strom?",o:["Der Blitz","Der Regen","Der Schnee","Der Nebel"],c:0,x:"Ein <b>Blitz</b> ist eine riesige Entladung von Strom in der Natur."},
+  {e:"🌙",l:"leicht",t:"Schalter",q:"Was passiert mit dem Licht, wenn du den Schalter ausschaltest?",o:["Es geht aus","Es wird heller","Es blinkt","Nichts"],c:0,x:"Der Schalter <b>unterbricht</b> den Stromkreis – das Licht geht aus."},
+  {e:"🔋",l:"leicht",t:"Stromquelle",q:"Was liefert in einem ferngesteuerten Auto den Strom?",o:["Batterien oder ein Akku","Wasser","Wind","Sonne im Auto"],c:0,x:"In vielen Spielzeugen liefern <b>Batterien</b> oder ein <b>Akku</b> den Strom."},
+
+  // ---- MITTEL ----
+  {e:"🔄",l:"mittel",t:"Stromkreis",q:"Aus welchen Teilen besteht ein einfacher Stromkreis?",o:["Stromquelle, Kabel, Lampe und Schalter","Nur aus einem Kabel","Nur aus einer Lampe","Aus Wasser und Luft"],c:0,x:"Ein Stromkreis braucht eine <b>Stromquelle</b>, <b>Kabel</b>, einen <b>Verbraucher</b> (z. B. Lampe) und meist einen <b>Schalter</b>."},
+  {e:"💡",l:"mittel",t:"Stromkreis",q:"Wann leuchtet die Lampe im Stromkreis?",o:["Wenn der Stromkreis geschlossen ist","Wenn er offen ist","Nie","Nur nachts"],c:0,x:"Nur im <b>geschlossenen</b> Stromkreis kann der Strom fließen – dann leuchtet die Lampe."},
+  {e:"🧤",l:"mittel",t:"Nichtleiter",q:"Wie nennt man Materialien, die den Strom NICHT leiten?",o:["Nichtleiter (Isolatoren)","Superleiter","Stromkreise","Schalter"],c:0,x:"Materialien wie Plastik oder Gummi sind <b>Nichtleiter</b>, auch Isolatoren genannt."},
+  {e:"🔌",l:"mittel",t:"Sicherheit",q:"Warum ist um ein Kabel eine Hülle aus Plastik?",o:["Damit man sich nicht am Strom verletzt","Damit es schön bunt ist","Damit es schwerer wird","Damit es leuchtet"],c:0,x:"Das Plastik ist ein <b>Isolator</b>. Es schützt dich, weil es den Strom nicht durchlässt."},
+  {e:"🔋",l:"mittel",t:"Stromquelle",q:"Was ist der Unterschied zwischen Batterie und Akku?",o:["Ein Akku kann wieder aufgeladen werden","Es gibt keinen Unterschied","Ein Akku ist immer rund","Eine Batterie leuchtet"],c:0,x:"Ein <b>Akku</b> lässt sich wieder aufladen. Eine normale Batterie nicht."},
+  {e:"🏭",l:"mittel",t:"Erzeugung",q:"Wo wird in großen Mengen Strom erzeugt?",o:["Im Kraftwerk","Im Supermarkt","In der Schule","Im Kühlschrank"],c:0,x:"In einem <b>Kraftwerk</b> wird sehr viel Strom für viele Häuser erzeugt."},
+  {e:"☀️",l:"mittel",t:"Energie",q:"Welche dieser Energiequellen ist erneuerbar?",o:["Die Sonne","Kohle","Erdöl","Erdgas"],c:0,x:"<b>Sonne</b>, Wind und Wasser sind erneuerbar – sie gehen nie aus."},
+  {e:"🔆",l:"mittel",t:"Energie",q:"Wie heißt Strom, der aus Sonnenlicht gewonnen wird?",o:["Solarstrom","Wasserstrom","Windstrom","Kohlestrom"],c:0,x:"<b>Solarzellen</b> machen aus Sonnenlicht Strom – das ist Solarstrom."},
+  {e:"💡",l:"mittel",t:"Sparen",q:"Warum soll man das Licht ausmachen, wenn man den Raum verlässt?",o:["Um Strom zu sparen","Damit es dunkel ist","Damit die Lampe hält ewig","Das muss man nicht"],c:0,x:"Wer Licht ausmacht, <b>spart Strom</b> – und schont die Umwelt."},
+  {e:"📺",l:"mittel",t:"Stromkreis",q:"Was ist ein „Verbraucher\" im Stromkreis?",o:["Ein Gerät, das den Strom nutzt","Die Steckdose","Das Kabel","Der Schalter"],c:0,x:"Ein <b>Verbraucher</b> (z. B. Lampe oder Fernseher) nutzt den Strom."},
+  {e:"🥢",l:"mittel",t:"Nichtleiter",q:"Welcher dieser Gegenstände leitet den Strom NICHT?",o:["Ein Holzlöffel","Eine Büroklammer","Ein Schlüssel","Ein Nagel"],c:0,x:"<b>Holz</b> ist ein Nichtleiter. Metall (Klammer, Schlüssel, Nagel) leitet dagegen Strom."},
+  {e:"🌬️",l:"mittel",t:"Energie",q:"Was treibt ein Windrad an, damit es Strom macht?",o:["Der Wind","Das Wasser","Die Sonne","Die Erde"],c:0,x:"Der <b>Wind</b> dreht die Flügel des Windrads – so entsteht Strom."},
+
+  // ---- SCHWER ----
+  {e:"🚫",l:"schwer",t:"Stromkreis",q:"Was passiert in einem offenen (unterbrochenen) Stromkreis?",o:["Der Strom fließt nicht, die Lampe bleibt dunkel","Die Lampe leuchtet heller","Der Strom wird stärker","Nichts ändert sich"],c:0,x:"Ist der Kreis <b>offen</b>, kann kein Strom fließen – die Lampe bleibt dunkel."},
+  {e:"🥄",l:"schwer",t:"Leiter",q:"Warum leiten Metalle den Strom so gut?",o:["In Metall können sich winzige Teilchen leicht bewegen","Weil Metall glänzt","Weil Metall schwer ist","Weil Metall kalt ist"],c:0,x:"In Metall sind <b>frei bewegliche Teilchen</b>, die den Strom weitertragen können."},
+  {e:"⛏️",l:"schwer",t:"Energie",q:"Welche Energiequelle ist NICHT erneuerbar?",o:["Kohle","Sonne","Wind","Wasser"],c:0,x:"<b>Kohle</b> ist irgendwann aufgebraucht. Sonne, Wind und Wasser sind erneuerbar."},
+  {e:"🌊",l:"schwer",t:"Erzeugung",q:"Wie nennt man eine Anlage, die mit Wasser Strom erzeugt?",o:["Wasserkraftwerk","Windrad","Solarzelle","Batterie"],c:0,x:"Ein <b>Wasserkraftwerk</b> nutzt strömendes Wasser, um Strom zu machen."},
+  {e:"⚡",l:"schwer",t:"Sicherheit",q:"Warum ist Strom aus der Steckdose gefährlicher als aus einer Batterie?",o:["Er ist viel stärker","Er ist bunter","Er ist kälter","Er ist langsamer"],c:0,x:"Der Strom aus der Steckdose ist <b>viel stärker</b> – darum ist er gefährlich."},
+  {e:"🗼",l:"schwer",t:"Stromnetz",q:"Wie gelangt der Strom vom Kraftwerk zu den Häusern?",o:["Über Stromleitungen und Masten","Über Straßen","Mit dem Auto","Über Flüsse"],c:0,x:"Der Strom fließt über lange <b>Stromleitungen</b> (das Stromnetz) zu den Häusern."},
+  {e:"😴",l:"schwer",t:"Sparen",q:"Was bedeutet „Standby\" bei Geräten?",o:["Das Gerät ist nicht ganz aus und braucht weiter Strom","Das Gerät ist kaputt","Das Gerät lädt sich auf","Das Gerät ist ganz aus"],c:0,x:"Im <b>Standby</b> ist ein Gerät nur scheinbar aus und verbraucht weiter etwas Strom."},
+  {e:"🟤",l:"schwer",t:"Leiter",q:"Welches Metall steckt oft im Inneren von Kabeln?",o:["Kupfer","Gold überall","Gummi","Glas"],c:0,x:"Die meisten Kabel haben innen <b>Kupfer</b>, weil es den Strom super leitet."},
+  {e:"💧",l:"schwer",t:"Sicherheit",q:"Warum sollte man Stecker nie mit nassen Händen anfassen?",o:["Wasser leitet Strom – das ist gefährlich","Der Stecker wird nass","Es macht ein Geräusch","Es ist verboten zu spielen"],c:0,x:"Mit nassen Händen kann der Strom durch das <b>Wasser</b> zu dir gelangen – sehr gefährlich!"},
+  {e:"🔧",l:"schwer",t:"Stromkreis",q:"Was brauchst du, damit aus Batterie und Lampe Licht wird?",o:["Einen geschlossenen Stromkreis mit Kabeln","Nur die Batterie","Nur die Lampe","Wasser"],c:0,x:"Du musst Batterie und Lampe mit <b>Kabeln</b> zu einem geschlossenen Stromkreis verbinden."}
+];
+
+const CARDS = [
+  {e:"🔁",f:"Stromkreis",b:"Der Weg, auf dem der Strom im Kreis fließt – von der Stromquelle durchs Kabel zum Verbraucher und wieder zurück."},
+  {e:"🔋",f:"Stromquelle",b:"Sie liefert den Strom, zum Beispiel eine Batterie, ein Akku oder die Steckdose."},
+  {e:"💡",f:"Verbraucher",b:"Ein Gerät, das den Strom nutzt – zum Beispiel eine Lampe, ein Fernseher oder ein Motor."},
+  {e:"🔘",f:"Schalter",b:"Öffnet oder schließt den Stromkreis. Damit kannst du den Strom an- und ausschalten."},
+  {e:"🥄",f:"Leiter",b:"Ein Material, das den Strom durchlässt – zum Beispiel Metall wie Kupfer."},
+  {e:"🧤",f:"Nichtleiter (Isolator)",b:"Ein Material, das den Strom nicht durchlässt – zum Beispiel Plastik, Gummi, Holz oder Glas."},
+  {e:"✅",f:"Geschlossener Stromkreis",b:"Alles ist verbunden – der Strom fließt und die Lampe leuchtet."},
+  {e:"🚫",f:"Offener Stromkreis",b:"Der Kreis ist unterbrochen – kein Strom fließt, die Lampe bleibt dunkel."},
+  {e:"🔌",f:"Batterie & Akku",b:"Beide liefern Strom. Ein Akku kann man wieder aufladen, eine normale Batterie nicht."},
+  {e:"🏭",f:"Kraftwerk",b:"Hier wird sehr viel Strom erzeugt und über Leitungen zu den Häusern geschickt."},
+  {e:"☀️",f:"Erneuerbare Energie",b:"Strom aus Sonne, Wind und Wasser. Diese Energie geht nie aus."},
+  {e:"⚠️",f:"Sicherheit mit Strom",b:"Nie etwas in die Steckdose stecken! Und Strom und Wasser niemals zusammenbringen."}
+];
+
+const STAGES = [
+  {n:"⚡",t:"Was ist Strom?",topics:["Stromkreis","Stromquelle","Natur"]},
+  {n:"🔄",t:"Der Stromkreis",topics:["Stromkreis","Verbraucher","Schalter"]},
+  {n:"🥄",t:"Leiter & Nichtleiter",topics:["Leiter","Nichtleiter"]},
+  {n:"⚠️",t:"Sicherheit mit Strom",topics:["Sicherheit"]},
+  {n:"🏭",t:"Woher kommt der Strom?",topics:["Erzeugung","Stromnetz"]},
+  {n:"🌱",t:"Energie & Strom sparen",topics:["Energie","Sparen"]}
+];
+
+const GAME_ITEMS = [
+  {e:"🥄",n:"Metalllöffel",cond:true},
+  {e:"👢",n:"Gummistiefel",cond:false},
+  {e:"🪵",n:"Holzstab",cond:false},
+  {e:"📎",n:"Büroklammer",cond:true},
+  {e:"🥤",n:"Plastikbecher",cond:false},
+  {e:"🔩",n:"Eisennagel",cond:true},
+  {e:"🍾",n:"Glasflasche",cond:false},
+  {e:"🔑",n:"Schlüssel",cond:true},
+  {e:"🧽",n:"Schwamm (trocken)",cond:false},
+  {e:"🪙",n:"Münze",cond:true},
+  {e:"✏️",n:"Bleistift (Holz)",cond:false},
+  {e:"🔌",n:"Kupferdraht",cond:true}
+];
+
+const RANKS = [
+  {min:1,name:"Kleiner Funke",ic:"⚡"},
+  {min:3,name:"Batterie-Fan",ic:"🔋"},
+  {min:5,name:"Glühbirnen-Kenner",ic:"💡"},
+  {min:7,name:"Stromkreis-Bauer",ic:"🔌"},
+  {min:9,name:"Blitz-Meister",ic:"🌩️"},
+  {min:11,name:"Strom-Professor",ic:"🎓"}
+];
+const XP_PER_LEVEL = 80;
+
+/* ============ STORAGE ============ */
+const Store = {
+  async get(k){
+    try{ if(window.storage){ const r = await window.storage.get(k); return r ? r.value : null; } }catch(e){}
+    try{ return localStorage.getItem(k); }catch(e){ return null; }
+  },
+  async set(k,v){
+    try{ if(window.storage){ await window.storage.set(k, String(v)); return; } }catch(e){}
+    try{ localStorage.setItem(k, String(v)); }catch(e){}
+  }
+};
+
+let state = { xp:0, totalRight:0, totalWrong:0, wrong:[], stagesDone:[], sound:true };
+
+async function loadState(){
+  const xp = await Store.get('strom_xp');
+  const tr = await Store.get('strom_right');
+  const tw = await Store.get('strom_wrong_count');
+  const wr = await Store.get('strom_wrong_ids');
+  const sd = await Store.get('strom_stages');
+  const so = await Store.get('strom_sound');
+  state.xp = parseInt(xp)||0;
+  state.totalRight = parseInt(tr)||0;
+  state.totalWrong = parseInt(tw)||0;
+  try{ state.wrong = wr ? JSON.parse(wr) : []; }catch(e){ state.wrong=[]; }
+  try{ state.stagesDone = sd ? JSON.parse(sd) : []; }catch(e){ state.stagesDone=[]; }
+  state.sound = so === null ? true : (so === 'true' || so === true);
+}
+async function saveState(){
+  await Store.set('strom_xp', state.xp);
+  await Store.set('strom_right', state.totalRight);
+  await Store.set('strom_wrong_count', state.totalWrong);
+  await Store.set('strom_wrong_ids', JSON.stringify(state.wrong));
+  await Store.set('strom_stages', JSON.stringify(state.stagesDone));
+  await Store.set('strom_sound', state.sound);
+}
+
+/* ============ LEVEL / RANK ============ */
+function levelFromXp(xp){ return Math.floor(xp / XP_PER_LEVEL) + 1; }
+function rankFor(level){
+  let r = RANKS[0];
+  for(const rk of RANKS){ if(level >= rk.min) r = rk; }
+  return r;
+}
+function renderTop(){
+  const lvl = levelFromXp(state.xp);
+  const rk = rankFor(lvl);
+  document.getElementById('lvlNum').textContent = lvl;
+  document.getElementById('rankName').textContent = rk.name;
+  document.getElementById('rankIcon').textContent = rk.ic;
+  const into = state.xp % XP_PER_LEVEL;
+  const pct = Math.round(into / XP_PER_LEVEL * 100);
+  document.getElementById('chargeFill').style.width = pct + '%';
+  document.getElementById('xpNow').textContent = state.xp + ' XP';
+  document.getElementById('xpNext').textContent = 'noch ' + (XP_PER_LEVEL - into) + ' XP bis Level ' + (lvl+1);
+  document.getElementById('mistCount').textContent = state.wrong.length + ' zum Üben';
+  document.getElementById('soundBtn').textContent = state.sound ? '🔊' : '🔇';
+}
+
+/* ============ SOUND ============ */
+let audioCtx = null;
+function beep(freqs, dur=0.12, type='sine'){
+  if(!state.sound) return;
+  try{
+    audioCtx = audioCtx || new (window.AudioContext||window.webkitAudioContext)();
+    let t = audioCtx.currentTime;
+    freqs.forEach((f,i)=>{
+      const o = audioCtx.createOscillator();
+      const g = audioCtx.createGain();
+      o.type = type; o.frequency.value = f;
+      o.connect(g); g.connect(audioCtx.destination);
+      g.gain.setValueAtTime(0.0001, t);
+      g.gain.exponentialRampToValueAtTime(0.25, t+0.02);
+      g.gain.exponentialRampToValueAtTime(0.0001, t+dur);
+      o.start(t); o.stop(t+dur);
+      t += dur*0.9;
+    });
+  }catch(e){}
+}
+const sndRight = ()=>beep([660,880,1100],0.12,'triangle');
+const sndWrong = ()=>beep([200,150],0.18,'sawtooth');
+const sndLevel = ()=>beep([523,659,784,1047],0.16,'triangle');
+
+/* ============ NAVIGATION ============ */
+function show(id){
+  document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  window.scrollTo({top:0,behavior:'smooth'});
+  if(id==='home') renderTop();
+}
+function confirmHome(){
+  if(quizActive && quizIdx < quizSet.length-0 && answeredThis===false){
+    if(!confirm('Quiz wirklich beenden? Dein Fortschritt für diese Runde geht verloren.')) return;
+  }
+  quizActive=false; show('home');
+}
+
+/* ============ XP HANDLING ============ */
+function addXp(amount){
+  const beforeLvl = levelFromXp(state.xp);
+  state.xp += amount;
+  const afterLvl = levelFromXp(state.xp);
+  const f = document.getElementById('xpFloat');
+  f.textContent = '+' + amount + ' XP';
+  f.classList.remove('go'); void f.offsetWidth; f.classList.add('go');
+  renderTop();
+  if(afterLvl > beforeLvl){
+    setTimeout(()=>{ sndLevel(); const rk=rankFor(afterLvl);
+      setTimeout(()=>alert('🎉 Level '+afterLvl+' erreicht!\nDein Rang: '+rk.ic+' '+rk.name),300);
+    }, 400);
+  }
+}
+
+/* ============ QUIZ ============ */
+let quizSet=[], quizIdx=0, quizRight=0, quizWrong=0, quizXp=0, answeredThis=false, quizActive=false, currentStage=null;
+
+function xpForLevel(l){ return l==='leicht'?10 : l==='mittel'?15 : 20; }
+
+function buildSet(filter){
+  let pool = QUESTIONS.map((q,i)=>({...q,id:i}));
+  if(filter && filter!=='alle'){
+    if(Array.isArray(filter)) pool = pool.filter(q=>filter.includes(q.t));
+    else pool = pool.filter(q=>q.l===filter);
+  }
+  // shuffle
+  for(let i=pool.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [pool[i],pool[j]]=[pool[j],pool[i]]; }
+  return pool;
+}
+
+function startQuiz(filter){
+  currentStage = null;
+  quizSet = buildSet(filter);
+  if(quizSet.length>10) quizSet = quizSet.slice(0,10);
+  quizIdx=0; quizRight=0; quizWrong=0; quizXp=0; quizActive=true;
+  show('quiz'); renderQuestion();
+}
+
+function startStage(idx){
+  const st = STAGES[idx];
+  if(idx>0 && !state.stagesDone.includes(idx-1)){ return; }
+  currentStage = idx;
+  quizSet = buildSet(st.topics);
+  quizIdx=0; quizRight=0; quizWrong=0; quizXp=0; quizActive=true;
+  show('quiz'); renderQuestion();
+}
+
+function startMistakeQuiz(){
+  const ids = [...state.wrong];
+  quizSet = ids.map(id=>({...QUESTIONS[id],id})).filter(q=>q.q);
+  for(let i=quizSet.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [quizSet[i],quizSet[j]]=[quizSet[j],quizSet[i]]; }
+  currentStage=null; quizIdx=0; quizRight=0; quizWrong=0; quizXp=0; quizActive=true;
+  show('quiz'); renderQuestion();
+}
+
+function renderQuestion(){
+  answeredThis=false;
+  const q = quizSet[quizIdx];
+  document.getElementById('qIdx').textContent = quizIdx+1;
+  document.getElementById('qTotal').textContent = quizSet.length;
+  document.getElementById('qprog').style.width = (quizIdx/quizSet.length*100)+'%';
+  const badge = document.getElementById('qBadge');
+  badge.textContent = q.l; badge.className = 'qbadge b-'+q.l;
+  document.getElementById('qEmoji').textContent = q.e;
+  document.getElementById('qText').innerHTML = q.q;
+  const opts = document.getElementById('qOpts');
+  opts.innerHTML = '';
+  // shuffle options but track correct
+  const order = q.o.map((txt,i)=>({txt,correct:i===q.c}));
+  for(let i=order.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [order[i],order[j]]=[order[j],order[i]]; }
+  order.forEach(op=>{
+    const b=document.createElement('button');
+    b.className='opt'; b.textContent=op.txt;
+    b.onclick=()=>answer(b, op.correct, q);
+    opts.appendChild(b);
+  });
+  const ex=document.getElementById('qExplain'); ex.className='explain'; ex.innerHTML='';
+  document.getElementById('nextBtn').style.display='none';
+}
+
+function answer(btn, correct, q){
+  if(answeredThis) return;
+  answeredThis=true;
+  const opts=[...document.getElementById('qOpts').children];
+  opts.forEach(o=>{
+    if(o.textContent===q.o[q.c]) o.classList.add('correct');
+    else o.classList.add('dim');
+  });
+  const ex=document.getElementById('qExplain');
+  if(correct){
+    btn.classList.add('correct'); sndRight(); fxConfetti();
+    quizRight++; state.totalRight++;
+    const gain=xpForLevel(q.l); quizXp+=gain; addXp(gain);
+    // remove from wrong list if present
+    state.wrong = state.wrong.filter(id=>id!==q.id);
+    ex.innerHTML='✅ Richtig! '+q.x;
+  }else{
+    btn.classList.add('wrong'); btn.classList.remove('dim'); sndWrong();
+    quizWrong++; state.totalWrong++;
+    if(!state.wrong.includes(q.id)) state.wrong.push(q.id);
+    ex.innerHTML='❌ Nicht ganz. '+q.x;
+  }
+  ex.classList.add('show');
+  document.getElementById('nextBtn').style.display='block';
+  document.getElementById('nextBtn').textContent = (quizIdx<quizSet.length-1)?'Weiter →':'Ergebnis ansehen 🎉';
+  saveState();
+}
+
+function nextQuestion(){
+  if(quizIdx<quizSet.length-1){ quizIdx++; renderQuestion(); window.scrollTo({top:0,behavior:'smooth'}); }
+  else finishQuiz();
+}
+
+function finishQuiz(){
+  quizActive=false;
+  if(currentStage!==null && quizWrong===0 && !state.stagesDone.includes(currentStage)){
+    state.stagesDone.push(currentStage);
+  }
+  saveState();
+  const total=quizRight+quizWrong;
+  document.getElementById('resRight').textContent=quizRight;
+  document.getElementById('resWrong').textContent=quizWrong;
+  document.getElementById('resXp').textContent='+'+quizXp;
+  let emoji='🎉', title='Super gemacht!', sub='';
+  const pct = total? quizRight/total : 0;
+  if(pct===1){ emoji='🏆'; title='Perfekt, Paul!'; sub='Alle Fragen richtig! Du bist ein echter Strom-Profi.'; }
+  else if(pct>=0.7){ emoji='⚡'; title='Stark gemacht!'; sub='Du kennst dich richtig gut mit Strom aus.'; }
+  else if(pct>=0.4){ emoji='👍'; title='Gut dabei!'; sub='Übe die Fehler nochmal, dann klappt es noch besser.'; }
+  else { emoji='💪'; title='Weiter üben!'; sub='Schau dir die Karteikarten an – du schaffst das!'; }
+  document.getElementById('resEmoji').textContent=emoji;
+  document.getElementById('resTitle').textContent=title;
+  document.getElementById('resSub').textContent=sub;
+  show('result');
+}
+
+/* ============ LERNPFAD ============ */
+function renderPath(){
+  const list=document.getElementById('pathList');
+  list.innerHTML='';
+  STAGES.forEach((st,i)=>{
+    const done=state.stagesDone.includes(i);
+    const locked = i>0 && !state.stagesDone.includes(i-1);
+    const div=document.createElement('div');
+    div.className='stage'+(done?' done':'')+(locked?' locked':'');
+    div.innerHTML=`<div class="num">${st.n}</div>
+      <div><div class="st-t">${i+1}. ${st.t}</div>
+      <div class="st-s">${locked?'🔒 Erst die Station davor schaffen':(done?'Geschafft!':'Tippen zum Starten')}</div></div>
+      <div class="stars">${done?'⭐':''}</div>`;
+    if(!locked) div.onclick=()=>startStage(i);
+    list.appendChild(div);
+  });
+}
+
+/* ============ KARTEIKARTEN ============ */
+let cardIdx=0;
+function openCards(){ cardIdx=0; renderCard(); show('cards'); }
+function renderCard(){
+  const c=CARDS[cardIdx];
+  document.getElementById('flipCard').classList.remove('flipped');
+  document.getElementById('cardEmoji').textContent=c.e;
+  document.getElementById('cardFront').textContent=c.f;
+  document.getElementById('cardBack').textContent=c.b;
+  document.getElementById('cardIdx').textContent=cardIdx+1;
+  document.getElementById('cardTotal').textContent=CARDS.length;
+}
+function flipCard(){ document.getElementById('flipCard').classList.toggle('flipped'); }
+function nextCard(e){ e.stopPropagation(); cardIdx=(cardIdx+1)%CARDS.length; renderCard(); }
+function prevCard(e){ e.stopPropagation(); cardIdx=(cardIdx-1+CARDS.length)%CARDS.length; renderCard(); }
+
+/* ============ FEHLER ============ */
+function openMistakes(){
+  const p=document.getElementById('mistPanel');
+  if(state.wrong.length===0){
+    p.innerHTML=`<div class="h-title">🔁 Meine Fehler</div>
+      <div class="empty"><div class="e">🌟</div>Super! Du hast keine offenen Fehler.<br>Mach ein Quiz, um zu üben.</div>`;
+  }else{
+    let html=`<div class="h-title">🔁 Meine Fehler</div>
+      <div class="h-sub">${state.wrong.length} Frage(n), die du nochmal üben kannst.</div>
+      <div style="margin-top:12px;display:grid;gap:8px">`;
+    state.wrong.forEach(id=>{ const q=QUESTIONS[id]; if(q) html+=`<div style="background:#fff6f6;border:2px solid #ffd5d5;border-radius:12px;padding:10px 12px;font-weight:700;font-size:14px">${q.e} ${q.q}</div>`; });
+    html+=`</div><button class="btn btn-primary" style="margin-top:14px" onclick="startMistakeQuiz()">Diese Fragen üben ⚡</button>`;
+    p.innerHTML=html;
+  }
+  show('mistakes');
+}
+
+/* ============ SPIEL ============ */
+let gScore=0, gStreak=0, gItem=null;
+function startGame(){ gScore=0; gStreak=0; show('game'); nextGameItem(); }
+function nextGameItem(){
+  gItem=GAME_ITEMS[Math.floor(Math.random()*GAME_ITEMS.length)];
+  document.getElementById('gameItem').textContent=gItem.e;
+  document.getElementById('gameName').textContent=gItem.n;
+  updGameScore();
+}
+function guess(asConductor){
+  const right = (asConductor===gItem.cond);
+  if(right){ sndRight(); gScore++; gStreak++; addXp(5); }
+  else { sndWrong(); gStreak=0; }
+  const tip = gItem.cond ? gItem.n+' ist aus Metall → leitet Strom ⚡' : gItem.n+' leitet keinen Strom 🚫';
+  document.getElementById('gameName').textContent=(right?'✅ Richtig! ':'❌ Leider falsch. ')+tip;
+  setTimeout(nextGameItem,1100);
+}
+function updGameScore(){ document.getElementById('gameScore').textContent='Punkte: '+gScore+' · Reihe: '+gStreak; }
+
+/* ============ URKUNDE ============ */
+function openCert(){
+  const lvl=levelFromXp(state.xp), rk=rankFor(lvl);
+  document.getElementById('certRankIcon').textContent=rk.ic;
+  document.getElementById('certRank').textContent=rk.name;
+  document.getElementById('certLvl').textContent=lvl;
+  document.getElementById('certXp').textContent=state.xp;
+  document.getElementById('certRight').textContent=state.totalRight+' Fragen richtig beantwortet';
+  document.getElementById('certDate').textContent=new Date().toLocaleDateString('de-DE');
+  show('cert');
+}
+
+/* ============ SOUND TOGGLE ============ */
+document.getElementById('soundBtn').addEventListener('click',()=>{
+  state.sound=!state.sound; saveState(); renderTop();
+  if(state.sound) beep([880],0.1);
+});
+
+/* ============ INIT ============ */
+(async function init(){
+  await loadState();
+  renderTop();
+  renderPath();
+})();
+</script>
+<script>
+function fxSpeak(){
+  try{
+    var q=document.getElementById('qText'); if(!q) return;
+    var txt=q.textContent.trim();
+    var opts=Array.prototype.map.call(document.querySelectorAll('#qOpts .opt'),function(b){return b.textContent.trim();});
+    if(opts.length) txt += '. ' + opts.join(', ');
+    if(!txt) return;
+    var u=new SpeechSynthesisUtterance(txt); u.lang='de-DE'; u.rate=0.95;
+    speechSynthesis.cancel(); speechSynthesis.speak(u);
+  }catch(e){}
+}
+function fxConfetti(){
+  try{
+    if(window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    var c=document.getElementById('fxCanvas');
+    if(!c){ c=document.createElement('canvas'); c.id='fxCanvas';
+      c.style.cssText='position:fixed;inset:0;pointer-events:none;z-index:99998'; document.body.appendChild(c); }
+    var x=c.getContext('2d'); c.width=innerWidth; c.height=innerHeight;
+    var cols=['#3aa6ff','#16c784','#ffd23f','#ff7a59','#a06bff','#ff5fa2'], P=[];
+    for(var i=0;i<110;i++) P.push({x:Math.random()*c.width,y:-20-Math.random()*c.height*0.3,
+      r:5+Math.random()*6,vy:2+Math.random()*3.5,vx:-1.5+Math.random()*3,
+      rot:Math.random()*6.28,vr:-0.2+Math.random()*0.4,col:cols[i%cols.length]});
+    var fr=0;(function loop(){ x.clearRect(0,0,c.width,c.height); fr++;
+      P.forEach(function(p){ p.x+=p.vx; p.y+=p.vy; p.rot+=p.vr; p.vy+=0.05;
+        x.save(); x.translate(p.x,p.y); x.rotate(p.rot); x.fillStyle=p.col;
+        x.fillRect(-p.r/2,-p.r/2,p.r,p.r*0.6); x.restore(); });
+      if(fr<200) requestAnimationFrame(loop); else x.clearRect(0,0,c.width,c.height);
+    })();
+  }catch(e){}
+}
+</script>
+</body>
+</html>

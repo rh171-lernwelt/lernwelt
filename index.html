@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lernwelt</title>
+<style>
+  :root{
+    --bg:#eef1f7;
+    --bg2:#e6eaf4;
+    --card:#ffffff;
+    --ink:#1b1c22;
+    --muted:#71768a;
+    --line:#e4e7f0;
+    --paul:#4f46e5;     /* Indigo – passt zu Pauls Lernwelt */
+    --leon:#10b981;     /* Grün – Leon, der Fußball-Fan */
+    --radius:26px;
+    --shadow:0 1px 2px rgba(20,22,40,.04), 0 10px 30px rgba(20,22,40,.07);
+    --font: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", system-ui, sans-serif;
+    --round: ui-rounded, "SF Pro Rounded", -apple-system, system-ui, sans-serif;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    font-family:var(--font);
+    color:var(--ink);
+    background:
+      radial-gradient(1200px 600px at 80% -10%, #f6f1ff 0%, rgba(246,241,255,0) 55%),
+      radial-gradient(1000px 500px at -10% 0%, #eaf4ff 0%, rgba(234,244,255,0) 50%),
+      linear-gradient(180deg, var(--bg) 0%, var(--bg2) 100%);
+    background-attachment:fixed;
+    min-height:100vh;
+    -webkit-font-smoothing:antialiased;
+    display:flex;flex-direction:column;
+  }
+  .bgfx{position:fixed;inset:0;z-index:-1;overflow:hidden;pointer-events:none;}
+  .bgfx span{position:absolute;border-radius:50%;filter:blur(64px);opacity:.45;will-change:transform;}
+  .bgfx span:nth-child(1){width:460px;height:460px;left:-100px;top:-130px;background:#cfe0ff;animation:drift1 44s ease-in-out infinite;}
+  .bgfx span:nth-child(2){width:400px;height:400px;right:-110px;top:-80px;background:#e9dbff;animation:drift2 52s ease-in-out infinite;}
+  .bgfx span:nth-child(3){width:340px;height:340px;left:42%;bottom:-160px;background:#d6f3e6;animation:drift3 60s ease-in-out infinite;}
+  @keyframes drift1{50%{transform:translate(70px,46px) scale(1.08);}}
+  @keyframes drift2{50%{transform:translate(-56px,54px) scale(1.05);}}
+  @keyframes drift3{50%{transform:translate(46px,-46px) scale(1.1);}}
+
+  .wrap{max-width:880px;margin:0 auto;padding:64px 22px 40px;width:100%;flex:1;
+    display:flex;flex-direction:column;justify-content:center;}
+
+  .hero{text-align:center;margin-bottom:40px;}
+  .hero .badge{display:inline-flex;align-items:center;gap:8px;background:var(--card);
+    border:1px solid var(--line);border-radius:999px;padding:7px 15px;font-size:13.5px;
+    color:var(--muted);box-shadow:var(--shadow);font-weight:600;margin-bottom:18px;}
+  .hero h1{font-family:var(--round);font-weight:800;font-size:42px;margin:0;letter-spacing:-.03em;line-height:1.05;}
+  .hero p{color:var(--muted);font-size:16.5px;margin:12px 0 0;}
+
+  .doors{display:grid;grid-template-columns:1fr 1fr;gap:18px;}
+
+  .door{
+    position:relative;display:flex;flex-direction:column;gap:6px;
+    background:var(--card);border:1px solid var(--line);border-radius:var(--radius);
+    padding:26px 24px 24px;text-decoration:none;color:inherit;box-shadow:var(--shadow);
+    overflow:hidden;transition:transform .16s ease, box-shadow .16s ease, border-color .16s ease;
+    min-height:220px;justify-content:flex-end;
+  }
+  .door::before{content:"";position:absolute;left:0;top:0;right:0;height:6px;background:var(--c);}
+  .door .ic{
+    width:74px;height:74px;border-radius:22px;display:grid;place-items:center;
+    font-size:40px;margin-bottom:auto;
+    background:color-mix(in srgb, var(--c) 14%, white);
+  }
+  .door .t{font-family:var(--round);font-weight:800;font-size:24px;letter-spacing:-.01em;}
+  .door .s{color:var(--muted);font-size:14.5px;line-height:1.35;}
+  .door .go{display:inline-flex;align-items:center;gap:7px;margin-top:12px;
+    font-family:var(--round);font-weight:800;font-size:14.5px;color:var(--c);}
+  .door .go .arr{transition:transform .16s ease;}
+
+  .door.live:hover{transform:translateY(-4px);box-shadow:0 18px 40px rgba(20,22,40,.14);border-color:#d7dcec;}
+  .door.live:hover .go .arr{transform:translateX(4px);}
+  .door.live:focus-visible{outline:3px solid var(--c);outline-offset:3px;}
+  .door.live:active{transform:translateY(-1px);}
+
+  .door.soon{cursor:default;}
+  .door.soon .ic{filter:grayscale(.15);opacity:.85;}
+  .door.soon .t,.door.soon .s{opacity:.85;}
+  .door .pill{position:absolute;top:18px;right:18px;background:color-mix(in srgb, var(--c) 13%, white);
+    color:color-mix(in srgb, var(--c) 70%, #222);font-family:var(--round);font-weight:800;
+    font-size:11px;letter-spacing:.03em;padding:4px 11px;border-radius:999px;}
+
+  .foot{text-align:center;color:var(--muted);font-size:13px;margin-top:34px;line-height:1.6;}
+  .foot b{color:#5b3ec8;}
+
+  @media(max-width:620px){
+    .wrap{padding:46px 18px 30px;}
+    .hero h1{font-size:33px;}
+    .doors{grid-template-columns:1fr;}
+    .door{min-height:auto;}
+  }
+  @media (prefers-reduced-motion: reduce){
+    *{animation:none!important;transition:none!important;}
+  }
+</style>
+</head>
+<body>
+<div class="bgfx" aria-hidden="true"><span></span><span></span><span></span></div>
+
+<div class="wrap">
+  <header class="hero">
+    <span class="badge">🌍 rh171 · Lernwelt</span>
+    <h1>Wer lernt heute?</h1>
+    <p>Tippe deinen Bereich an – los geht's!</p>
+  </header>
+
+  <main class="doors">
+    <a class="door live" href="paul/" style="--c:var(--paul)">
+      <div class="ic">🚀</div>
+      <div class="t">Pauls Lernwelt</div>
+      <div class="s">Deutsch, HSU, Musik & mehr – spielen und lernen.</div>
+      <span class="go">Reingehen <span class="arr">›</span></span>
+    </a>
+
+    <div class="door soon" href="leon/" style="--c:var(--leon)" aria-disabled="true">
+      <span class="pill">kommt bald</span>
+      <div class="ic">⚽</div>
+      <div class="t">Leons Lernwelt</div>
+      <div class="s">Hier entsteht bald Leons eigener Bereich.</div>
+      <span class="go" style="opacity:.7">In Arbeit</span>
+    </div>
+  </main>
+
+  <p class="foot">
+    Deine Lernwelt wächst mit jedem Spiel. 🌱<br>
+    Lesezeichen setzen: <b>lernwelt.rh171.de</b>
+  </p>
+</div>
+
+</body>
+</html>

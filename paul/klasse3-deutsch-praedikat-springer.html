@@ -1,0 +1,672 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Prädikat-Springer 🕵️</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Nunito:wght@600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --praedikat:#fb923c; --praedikat-dunkel:#ea580c;
+    --richtig:#22c55e; --falsch:#ef4444; --gold:#fbbf24;
+    --tinte:#1e293b; --karte:#ffffff;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+  html,body{margin:0;padding:0;height:100%;overflow:hidden;background:#0f172a;font-family:'Nunito',sans-serif;}
+  #huelle{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;}
+  #buehne{position:relative;width:100%;height:100%;max-width:1100px;max-height:100vh;}
+  canvas{display:block;width:100%;height:100%;touch-action:none;background:#9fd8f5;}
+
+  #kopf{position:absolute;top:0;left:0;right:0;padding:10px 14px;display:flex;flex-direction:column;gap:8px;pointer-events:none;}
+  #satzkarte{background:rgba(255,255,255,0.94);border-radius:18px;padding:12px 18px;box-shadow:0 6px 0 rgba(0,0,0,0.10);text-align:center;align-self:center;max-width:96%;}
+  #satzlabel{font-family:'Fredoka';font-size:13px;letter-spacing:.5px;color:#64748b;text-transform:uppercase;margin-bottom:2px;}
+  #satz{font-family:'Fredoka';font-weight:600;font-size:clamp(18px,4.6vw,30px);color:var(--tinte);line-height:1.25;}
+  .luecke{color:var(--praedikat);border-bottom:4px dotted var(--praedikat);padding:0 10px;}
+  .luecke.geloest{color:var(--richtig);border-bottom-color:var(--richtig);}
+  #anzeigen{display:flex;justify-content:space-between;align-items:center;width:100%;}
+  .pille{background:rgba(255,255,255,0.92);border-radius:999px;padding:6px 14px;font-family:'Fredoka';font-weight:600;font-size:clamp(15px,3.6vw,20px);color:var(--tinte);box-shadow:0 4px 0 rgba(0,0,0,0.10);display:flex;align-items:center;gap:6px;}
+
+  #steuerung{position:absolute;bottom:0;left:0;right:0;display:flex;justify-content:space-between;padding:18px 18px 26px;pointer-events:none;}
+  .knopfgruppe{display:flex;gap:14px;pointer-events:auto;}
+  .knopf{width:74px;height:74px;border-radius:50%;border:none;background:rgba(255,255,255,0.85);box-shadow:0 5px 0 rgba(0,0,0,0.20);font-size:34px;color:var(--tinte);display:flex;align-items:center;justify-content:center;user-select:none;touch-action:none;transition:transform .05s;}
+  .knopf:active{transform:translateY(4px);box-shadow:0 1px 0 rgba(0,0,0,0.20);}
+  #knopf-sprung{background:var(--praedikat);color:#fff;width:88px;height:88px;font-size:28px;font-family:'Fredoka';font-weight:700;}
+
+  .schirm{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:24px;background:rgba(15,23,42,0.55);backdrop-filter:blur(3px);}
+  .schirm.weg{display:none;}
+  .tafel{background:var(--karte);border-radius:28px;padding:30px 26px;max-width:440px;width:100%;box-shadow:0 14px 0 rgba(0,0,0,0.18);}
+  .tafel h1{font-family:'Fredoka';font-weight:700;font-size:clamp(28px,7vw,42px);margin:0 0 6px;color:var(--tinte);}
+  .tafel h2{font-family:'Fredoka';font-weight:700;font-size:clamp(24px,6vw,34px);margin:0 0 6px;color:var(--tinte);}
+  .tafel p{font-size:clamp(15px,4vw,18px);color:#475569;margin:0 0 8px;line-height:1.5;}
+  .hilfe{text-align:left;background:#f1f5f9;border-radius:16px;padding:14px 16px;margin:16px 0;font-size:15px;color:#334155;line-height:1.6;}
+  .hilfe b{color:var(--praedikat-dunkel);}
+  .startknopf{margin-top:14px;border:none;background:var(--praedikat);color:#fff;font-family:'Fredoka';font-weight:700;font-size:clamp(20px,5vw,26px);padding:16px 34px;border-radius:18px;box-shadow:0 6px 0 var(--praedikat-dunkel);cursor:pointer;transition:transform .06s;}
+  .startknopf:active{transform:translateY(4px);box-shadow:0 2px 0 var(--praedikat-dunkel);}
+  .startknopf:focus-visible{outline:4px solid #1e293b;outline-offset:3px;}
+  .punktegross{font-family:'Fredoka';font-weight:700;font-size:clamp(40px,11vw,64px);color:var(--praedikat);line-height:1;}
+  .rekord{font-size:16px;color:#64748b;margin-top:4px;}
+  #tonknopf{position:absolute;top:12px;right:12px;z-index:5;background:rgba(255,255,255,0.9);border:none;border-radius:50%;width:44px;height:44px;font-size:20px;box-shadow:0 4px 0 rgba(0,0,0,0.12);cursor:pointer;}
+  @media (max-width:560px){ .knopf{width:64px;height:64px;font-size:28px;} #knopf-sprung{width:78px;height:78px;} }
+</style>
+</head>
+<body>
+<a href="index.html" id="hubHomeBtn" onclick="return hubGoHome(event)" aria-label="Zurueck zur Startseite">🏠 Startseite</a>
+<style>
+#hubHomeBtn{position:fixed;top:12px;left:12px;z-index:2147483600;display:inline-flex;align-items:center;gap:6px;text-decoration:none;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",system-ui,sans-serif;font-weight:700;font-size:14px;line-height:1;color:#1b1c22;background:rgba(255,255,255,.92);border:1px solid rgba(0,0,0,.08);border-radius:999px;padding:9px 14px;box-shadow:0 4px 14px rgba(20,22,40,.18);-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);cursor:pointer;}
+#hubHomeBtn:hover{background:#fff;}
+#hubHomeBtn:active{transform:translateY(1px);}
+#hubHomeBtn:focus-visible{outline:3px solid #9db4ff;outline-offset:2px;}
+@media print{#hubHomeBtn{display:none!important;}}
+</style>
+<script>function hubGoHome(e){if(e&&e.preventDefault)e.preventDefault();var u=null;try{u=localStorage.getItem("hub-url");}catch(x){}window.location.href=u||"index.html";return false;}</script>
+
+<div id="huelle">
+  <div id="buehne">
+    <canvas id="spiel"></canvas>
+
+    <div id="kopf">
+      <div id="anzeigen">
+        <div class="pille" id="herzen">❤️❤️❤️</div>
+        <div class="pille" id="punkte">⭐ 0</div>
+      </div>
+      <div id="satzkarte">
+        <div id="satzlabel">Spring zum richtigen Prädikat!</div>
+        <div id="satz">Bereit?</div>
+      </div>
+    </div>
+
+    <button id="tonknopf" aria-label="Ton an/aus">🔊</button>
+
+    <div id="steuerung">
+      <div class="knopfgruppe">
+        <button class="knopf" id="knopf-links" aria-label="Nach links">◀</button>
+        <button class="knopf" id="knopf-rechts" aria-label="Nach rechts">▶</button>
+      </div>
+      <div class="knopfgruppe">
+        <button class="knopf" id="knopf-sprung" aria-label="Springen">SPRUNG</button>
+      </div>
+    </div>
+
+    <div class="schirm" id="schirm-start">
+      <div class="tafel">
+        <h1>🕵️ Prädikat-Springer</h1>
+        <p>Hilf dem Detektiv, das <b style="color:var(--praedikat-dunkel)">Prädikat</b> zu finden!</p>
+        <div class="hilfe">
+          <b>So geht's:</b><br>
+          🏃 Lauf nach rechts und sammle ⭐ Sterne.<br>
+          🦘 Spring über die <b>Fehlerteufel</b> 👾 (zweimal tippen = Doppelsprung!).<br>
+          🎈 Bei jedem Satz schweben 3 Wort-Ballons. Spring den Ballon mit dem <b>Prädikat</b> an – das <b>Tätigkeitswort</b> (Was tut jemand?).<br>
+          ❤️ Falsches Wort oder ein Teufel kosten ein Herz!
+        </div>
+        <p style="font-size:14px;color:#64748b">Steuerung: <b>◀ ▶</b> tippen oder Pfeiltasten · <b>SPRUNG</b> oder Leertaste</p>
+        <button class="startknopf" id="los">Los geht's! 🚀</button>
+      </div>
+    </div>
+
+    <div class="schirm weg" id="schirm-ende">
+      <div class="tafel">
+        <h2 id="ende-titel">Geschafft! 🎉</h2>
+        <p id="ende-text">Du hast viele Prädikate gefunden!</p>
+        <div class="punktegross" id="ende-punkte">0</div>
+        <div class="rekord" id="ende-rekord">Bestleistung: 0</div>
+        <p style="margin-top:14px;font-size:15px;color:#475569" id="ende-saetze"></p>
+        <button class="startknopf" id="nochmal">Nochmal! 🔁</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+"use strict";
+(function(){
+  var SAETZE = [
+    { vor:"Der Hund",  p:"bellt",    nach:"laut im Garten.",     ab:["Hund","Garten"] },
+    { vor:"Die Kinder",p:"spielen",  nach:"auf dem Spielplatz.", ab:["Kinder","Spielplatz"] },
+    { vor:"Die Sonne", p:"scheint",  nach:"hell am Himmel.",     ab:["Sonne","Himmel"] },
+    { vor:"Mein Bruder",p:"isst",    nach:"ein großes Eis.",     ab:["Bruder","Eis"] },
+    { vor:"Die Katze", p:"schläft",  nach:"auf dem Sofa.",       ab:["Katze","Sofa"] },
+    { vor:"Wir",       p:"singen",   nach:"ein fröhliches Lied.",ab:["Wir","Lied"] },
+    { vor:"Der Vogel", p:"fliegt",   nach:"hoch über den Baum.", ab:["Vogel","Baum"] },
+    { vor:"Die Lehrerin",p:"liest",  nach:"eine Geschichte vor.",ab:["Lehrerin","Geschichte"] },
+    { vor:"Das Auto",  p:"fährt",    nach:"schnell über die Straße.",ab:["Auto","Straße"] },
+    { vor:"Oma",       p:"backt",    nach:"einen leckeren Kuchen.",ab:["Oma","Kuchen"] },
+    { vor:"Die Blumen",p:"wachsen",  nach:"im bunten Garten.",   ab:["Blumen","Garten"] },
+    { vor:"Der Ball",  p:"rollt",    nach:"genau ins Tor.",      ab:["Ball","Tor"] },
+    { vor:"Mein Papa", p:"kocht",    nach:"das Mittagessen.",    ab:["Papa","Essen"] },
+    { vor:"Die Maus",  p:"flieht",   nach:"vor der Katze.",      ab:["Maus","Katze"] },
+    { vor:"Die Ente",  p:"schwimmt", nach:"ruhig im Teich.",     ab:["Ente","Teich"] },
+    { vor:"Der Wind",  p:"weht",     nach:"sehr stark.",         ab:["Wind","stark"] },
+    { vor:"Paul",      p:"rennt",    nach:"schnell nach Hause.", ab:["Paul","Hause"] },
+    { vor:"Die Schüler",p:"hören",   nach:"aufmerksam zu.",      ab:["Schüler","aufmerksam"] },
+    { vor:"Das Pferd", p:"springt",  nach:"über den Zaun.",      ab:["Pferd","Zaun"] },
+    { vor:"Die Biene", p:"summt",    nach:"um die Blume.",       ab:["Biene","Blume"] }
+  ];
+
+  var cv = document.getElementById('spiel');
+  var ctx = cv.getContext('2d');
+  var W = 800, H = 450, dpr = 1;
+  var bodenY = 360, horizY = 290;
+
+  function passeGroesse(){
+    var b = document.getElementById('buehne').getBoundingClientRect();
+    dpr = Math.min(window.devicePixelRatio || 1, 2);
+    W = Math.max(360, b.width);
+    H = Math.max(320, b.height);
+    cv.width = Math.round(W * dpr);
+    cv.height = Math.round(H * dpr);
+    cv.style.width = W + 'px';
+    cv.style.height = H + 'px';
+    ctx.setTransform(dpr,0,0,dpr,0,0);
+    bodenY = H - 110;
+    horizY = bodenY - 64;
+  }
+
+  var actx = null, tonAn = true;
+  function ton(freq, dauer, typ, vol){
+    if(!tonAn) return;
+    try{
+      if(!actx) actx = new (window.AudioContext||window.webkitAudioContext)();
+      var o = actx.createOscillator(), g = actx.createGain();
+      o.type = typ||'sine'; o.frequency.value = freq;
+      g.gain.value = vol||0.18;
+      o.connect(g); g.connect(actx.destination);
+      var t = actx.currentTime;
+      g.gain.setValueAtTime(g.gain.value, t);
+      g.gain.exponentialRampToValueAtTime(0.0001, t + (dauer||0.15));
+      o.start(t); o.stop(t + (dauer||0.15));
+    }catch(e){}
+  }
+  function sndSprung(){ ton(520,0.12,'square',0.12); }
+  function sndStern(){ ton(880,0.08,'triangle',0.16); setTimeout(function(){ton(1180,0.1,'triangle',0.16);},70); }
+  function sndRichtig(){ ton(660,0.1,'sine',0.2); setTimeout(function(){ton(990,0.16,'sine',0.2);},90); }
+  function sndFalsch(){ ton(150,0.25,'sawtooth',0.16); }
+
+  var zustand = 'start';
+  var held = { x:0, y:0, vx:0, vy:0, w:42, h:52, amBoden:true, blickRechts:true, unverwundbar:0, lauf:0, spruenge:0 };
+  var TASTE = { links:false, rechts:false };
+  var kamera = 0;
+  var punkte = 0, herzen = 3, geloesteSaetze = 0;
+  var sterne = [], teufel = [], partikel = [];
+  var satzIndex = 0, aktSatz = null, aktBallons = null;
+  var naechsteWeltX = 0, naechstesBallonX = 0, bildschirmRuettel = 0, satzMischung = [];
+
+  var G = 0.9, SPRUNGKRAFT = -15, LAUFTEMPO = 3.6;
+
+  function rekordHolen(){ try{return parseInt(localStorage.getItem('praedikatSpringerRekord')||'0',10);}catch(e){return 0;} }
+  function rekordSetzen(v){ try{localStorage.setItem('praedikatSpringerRekord', String(v));}catch(e){} }
+  function mische(a){ a=a.slice(); for(var i=a.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1));var tmp=a[i];a[i]=a[j];a[j]=tmp;} return a; }
+
+  function neuStart(){
+    passeGroesse();
+    punkte = 0; herzen = 3; geloesteSaetze = 0;
+    sterne = []; teufel = []; partikel = [];
+    kamera = 0;
+    held.x = 120; held.y = bodenY - held.h; held.vx = 0; held.vy = 0;
+    held.amBoden = true; held.unverwundbar = 0; held.blickRechts = true; held.spruenge = 0;
+    satzMischung = mische(SAETZE.map(function(_,i){return i;}));
+    satzIndex = 0; aktBallons = null; naechsteWeltX = 0; naechstesBallonX = 700; bildschirmRuettel = 0;
+    naechstenSatzLaden();
+    weltErzeugen(2000);
+    aktualAnzeigen();
+    zustand = 'spielt';
+  }
+
+  function naechstenSatzLaden(){
+    var idx = satzMischung[satzIndex % satzMischung.length];
+    aktSatz = SAETZE[idx];
+    satzIndex++;
+  }
+
+  function ballonSetSpawnen(worldX){
+    var woerter = mische([
+      {wort:aktSatz.p, korrekt:true},
+      {wort:aktSatz.ab[0], korrekt:false},
+      {wort:aktSatz.ab[1], korrekt:false}
+    ]);
+    var hoehen = mische([bodenY-100, bodenY-150, bodenY-200]);
+    var items = woerter.map(function(w,i){
+      return { wort:w.wort, korrekt:w.korrekt, x:worldX + i*88, y:hoehen[i], r:40, weg:false, wack:Math.random()*6 };
+    });
+    aktBallons = { items:items, geloest:false };
+    aktualSatzAnzeige(false);
+  }
+
+  function weltErzeugen(bisX){
+    while(naechsteWeltX < bisX){
+      var x = naechsteWeltX;
+      if(Math.random()<0.7){
+        var basis = bodenY - 70 - Math.random()*110;
+        var n = 3 + Math.floor(Math.random()*3);
+        for(var i=0;i<n;i++){
+          sterne.push({x:x + i*42, y:basis - Math.sin(i/(n-1)*Math.PI)*46, r:13, weg:false, blink:Math.random()*6});
+        }
+      }
+      if(Math.random()<0.45 && Math.abs(x - naechstesBallonX) > 240){
+        teufel.push({x:x+Math.random()*120, y:bodenY-38, w:40, h:38, weg:false, t:Math.random()*6});
+      }
+      naechsteWeltX += 260 + Math.random()*120;
+    }
+    if(!aktBallons && naechstesBallonX < bisX){ ballonSetSpawnen(naechstesBallonX); }
+  }
+
+  function springen(){
+    if(zustand!=='spielt') return;
+    if(held.spruenge < 2){ held.vy = SPRUNGKRAFT; held.amBoden=false; held.spruenge++; sndSprung(); }
+  }
+  function halten(btn, an){ if(btn==='links')TASTE.links=an; if(btn==='rechts')TASTE.rechts=an; }
+
+  function knopfBinden(id, fn, fnUp){
+    var el = document.getElementById(id);
+    var an = function(e){ e.preventDefault(); fn(); };
+    var aus = function(e){ e.preventDefault(); if(fnUp)fnUp(); };
+    el.addEventListener('touchstart', an, {passive:false});
+    el.addEventListener('touchend', aus, {passive:false});
+    el.addEventListener('touchcancel', aus, {passive:false});
+    el.addEventListener('mousedown', an);
+    el.addEventListener('mouseup', aus);
+    el.addEventListener('mouseleave', aus);
+  }
+  knopfBinden('knopf-links', function(){halten('links',true);}, function(){halten('links',false);});
+  knopfBinden('knopf-rechts', function(){halten('rechts',true);}, function(){halten('rechts',false);});
+  knopfBinden('knopf-sprung', springen);
+
+  window.addEventListener('keydown', function(e){
+    if(e.code==='ArrowLeft'||e.code==='KeyA'){TASTE.links=true;}
+    else if(e.code==='ArrowRight'||e.code==='KeyD'){TASTE.rechts=true;}
+    else if(e.code==='Space'||e.code==='ArrowUp'||e.code==='KeyW'){e.preventDefault();springen();}
+    else if(e.code==='Enter' && zustand!=='spielt'){ if(zustand==='start')starten(); else neuStartUndStart(); }
+  });
+  window.addEventListener('keyup', function(e){
+    if(e.code==='ArrowLeft'||e.code==='KeyA')TASTE.links=false;
+    if(e.code==='ArrowRight'||e.code==='KeyD')TASTE.rechts=false;
+  });
+
+  document.getElementById('tonknopf').addEventListener('click', function(){
+    tonAn = !tonAn;
+    document.getElementById('tonknopf').textContent = tonAn ? '🔊' : '🔇';
+    if(tonAn) sndStern();
+  });
+
+  function update(){
+    if(zustand!=='spielt') return;
+    held.vx = 0;
+    if(TASTE.links){ held.vx = -LAUFTEMPO; held.blickRechts=false; }
+    if(TASTE.rechts){ held.vx = LAUFTEMPO; held.blickRechts=true; }
+    held.x += held.vx;
+    if(held.x < kamera + 10) held.x = kamera + 10;
+    if(Math.abs(held.vx)>0.1) held.lauf += 0.3;
+
+    held.vy += G; held.y += held.vy;
+    if(held.y + held.h >= bodenY){ held.y = bodenY - held.h; held.vy = 0; held.amBoden = true; held.spruenge = 0; }
+    else held.amBoden = false;
+
+    var zielKam = held.x - W*0.28;
+    kamera += (zielKam - kamera)*0.12;
+    if(kamera < 0) kamera = 0;
+
+    if(held.unverwundbar>0) held.unverwundbar--;
+    if(bildschirmRuettel>0) bildschirmRuettel--;
+
+    weltErzeugen(kamera + W + 600);
+
+    var i, s, t, it;
+    for(i=0;i<sterne.length;i++){ s=sterne[i];
+      if(s.weg) continue; s.blink+=0.1;
+      if(rechteck(held.x,held.y,held.w,held.h, s.x-s.r,s.y-s.r,s.r*2,s.r*2)){
+        s.weg=true; punkte+=5; sndStern(); funken(s.x,s.y,'#fbbf24',8); aktualAnzeigen();
+      }
+    }
+    if(held.unverwundbar<=0){
+      for(i=0;i<teufel.length;i++){ t=teufel[i];
+        if(t.weg) continue;
+        if(rechteck(held.x,held.y,held.w,held.h, t.x,t.y,t.w,t.h)){
+          t.weg=true; herzVerlieren(); funken(t.x+t.w/2,t.y,'#ef4444',10);
+        }
+      }
+    }
+    for(i=0;i<teufel.length;i++){ teufel[i].t+=0.05; }
+
+    if(aktBallons && !aktBallons.geloest){
+      for(i=0;i<aktBallons.items.length;i++){ it=aktBallons.items[i];
+        if(it.weg) continue;
+        it.wack += 0.06;
+        var by = it.y + Math.sin(it.wack)*5;
+        if(kreisRechteck(it.x, by, it.r, held.x,held.y,held.w,held.h)){
+          if(it.korrekt){ ballonRichtig(it, by); }
+          else { it.weg = true; herzVerlieren(); funken(it.x,by,'#ef4444',12); }
+        }
+      }
+    }
+
+    for(i=0;i<partikel.length;i++){ var p=partikel[i]; p.x+=p.vx; p.y+=p.vy; p.vy+=0.3; p.leben--; }
+    partikel = partikel.filter(function(p){return p.leben>0;});
+    sterne = sterne.filter(function(s){return !s.weg && s.x > kamera-200;});
+    teufel = teufel.filter(function(t){return !t.weg && t.x > kamera-200;});
+  }
+
+  function ballonRichtig(it, by){
+    aktBallons.geloest = true;
+    punkte += 20; geloesteSaetze++;
+    held.vy = SPRUNGKRAFT*0.7; held.amBoden=false; held.spruenge=1;
+    sndRichtig(); fxConfetti(); funken(it.x, by, '#22c55e', 22);
+    aktualSatzAnzeige(true); aktualAnzeigen();
+    naechstesBallonX = it.x + 900 + Math.random()*300;
+    setTimeout(function(){ aktBallons = null; naechstenSatzLaden(); }, 850);
+  }
+
+  function herzVerlieren(){
+    herzen--; held.unverwundbar = 80; bildschirmRuettel = 14; sndFalsch(); aktualAnzeigen();
+    if(herzen<=0) spielEnde();
+  }
+
+  function funken(x,y,farbe,n){
+    for(var i=0;i<n;i++){
+      var a = Math.random()*Math.PI*2, s = 1+Math.random()*4;
+      partikel.push({x:x,y:y,vx:Math.cos(a)*s,vy:Math.sin(a)*s-2,leben:24+Math.random()*16,farbe:farbe,r:2+Math.random()*3});
+    }
+  }
+
+  function rechteck(ax,ay,aw,ah, bx,by,bw,bh){ return ax<bx+bw && ax+aw>bx && ay<by+bh && ay+ah>by; }
+  function kreisRechteck(cx,cy,r, rx,ry,rw,rh){
+    var nx = Math.max(rx, Math.min(cx, rx+rw));
+    var ny = Math.max(ry, Math.min(cy, ry+rh));
+    var dx = cx-nx, dy = cy-ny;
+    return dx*dx+dy*dy <= r*r;
+  }
+
+  // ---------- Zeichnen (2.5D) ----------
+  var wolken = [], berge = [], huegel = [], busch = [];
+  for(var i=0;i<14;i++) wolken.push({x:i*340+Math.random()*180, y:30+Math.random()*90, s:0.6+Math.random()*0.8});
+  for(var i=0;i<24;i++) berge.push({x:i*260, h:50+Math.random()*60, b:120+Math.random()*80});
+  for(var i=0;i<30;i++) huegel.push({x:i*200, h:30+Math.random()*30, b:140+Math.random()*70});
+  for(var i=0;i<40;i++) busch.push({x:i*150+Math.random()*60, s:0.7+Math.random()*0.6});
+
+  function himmel(){
+    var g = ctx.createLinearGradient(0,0,0,bodenY);
+    g.addColorStop(0,'#5eb8e8'); g.addColorStop(0.55,'#9ed8f2'); g.addColorStop(1,'#d6f0e6');
+    ctx.fillStyle=g; ctx.fillRect(0,0,W,bodenY+2);
+    // Sonne
+    var sg = ctx.createRadialGradient(W*0.8,60,8,W*0.8,60,90);
+    sg.addColorStop(0,'rgba(255,250,210,0.95)'); sg.addColorStop(0.4,'rgba(255,236,150,0.5)'); sg.addColorStop(1,'rgba(255,236,150,0)');
+    ctx.fillStyle=sg; ctx.beginPath(); ctx.arc(W*0.8,60,90,0,Math.PI*2); ctx.fill();
+    ctx.fillStyle='#fff6c8'; ctx.beginPath(); ctx.arc(W*0.8,60,26,0,Math.PI*2); ctx.fill();
+  }
+
+  function parallaxBerge(){
+    ctx.fillStyle='#a8c6d8';
+    for(var k=0;k<berge.length;k++){ var m=berge[k];
+      var x = m.x - kamera*0.12;
+      var mx = ((x % (W+400))+(W+400))%(W+400) - 200;
+      ctx.beginPath(); ctx.moveTo(mx-m.b/2,horizY); ctx.lineTo(mx,horizY-m.h); ctx.lineTo(mx+m.b/2,horizY); ctx.closePath(); ctx.fill();
+    }
+    ctx.fillStyle='#7fb069';
+    for(var k=0;k<huegel.length;k++){ var hh=huegel[k];
+      var x = hh.x - kamera*0.28;
+      var mx = ((x % (W+300))+(W+300))%(W+300) - 150;
+      ctx.beginPath(); ctx.moveTo(mx-hh.b/2,horizY+6); ctx.quadraticCurveTo(mx,horizY-hh.h, mx+hh.b/2,horizY+6); ctx.closePath(); ctx.fill();
+    }
+  }
+
+  function wolkeZeichnen(x,y,r){
+    ctx.beginPath();
+    ctx.arc(x,y,r,0,Math.PI*2); ctx.arc(x+r,y+5,r*0.8,0,Math.PI*2);
+    ctx.arc(x-r,y+7,r*0.7,0,Math.PI*2); ctx.arc(x+r*0.4,y-r*0.5,r*0.7,0,Math.PI*2);
+    ctx.fill();
+  }
+  function wolkenZeichnen(){
+    ctx.fillStyle='rgba(255,255,255,0.85)';
+    for(var k=0;k<wolken.length;k++){ var c=wolken[k];
+      var wx = c.x - kamera*0.18;
+      var mx = ((wx % (W+360))+(W+360))%(W+360) - 180;
+      wolkeZeichnen(mx, c.y, 30*c.s);
+    }
+  }
+
+  function boden(){
+    var ein = 0.14;
+    // perspektivische Oberseite (Gras)
+    var gg = ctx.createLinearGradient(0,horizY,0,bodenY);
+    gg.addColorStop(0,'#8fce72'); gg.addColorStop(1,'#74b755');
+    ctx.fillStyle=gg;
+    var xL_h = W/2*ein, xR_h = W - W/2*ein;
+    ctx.beginPath(); ctx.moveTo(0,bodenY); ctx.lineTo(xL_h,horizY); ctx.lineTo(xR_h,horizY); ctx.lineTo(W,bodenY); ctx.closePath(); ctx.fill();
+    // perspektivische Längslinien
+    ctx.strokeStyle='rgba(255,255,255,0.16)'; ctx.lineWidth=1.5;
+    var schritt=72, off=(kamera*0.7)%schritt;
+    ctx.beginPath();
+    for(var sx=-off; sx<=W+schritt; sx+=schritt){
+      var xh = W/2 + (sx - W/2)*(1-ein);
+      ctx.moveTo(sx,bodenY); ctx.lineTo(xh,horizY);
+    }
+    ctx.stroke();
+    // Querlinien
+    ctx.strokeStyle='rgba(0,0,0,0.06)';
+    for(var q=1;q<=2;q++){ var tt=q/3; var y=bodenY-(bodenY-horizY)*tt;
+      var xl = 0*(1-tt)+(W/2*ein)*tt, xr=W*(1-tt)+(W-W/2*ein)*tt;
+      ctx.beginPath(); ctx.moveTo(xl,y); ctx.lineTo(xr,y); ctx.stroke();
+    }
+    // Büsche an der Bodenkante (mittlerer Parallax)
+    for(var k=0;k<busch.length;k++){ var bsh=busch[k];
+      var x=bsh.x - kamera*0.6;
+      var mx=((x % (W+200))+(W+200))%(W+200)-100;
+      ctx.fillStyle='#5f9e46';
+      ctx.beginPath(); ctx.arc(mx,bodenY-6,12*bsh.s,0,Math.PI*2); ctx.arc(mx+12*bsh.s,bodenY-4,9*bsh.s,0,Math.PI*2); ctx.arc(mx-11*bsh.s,bodenY-3,8*bsh.s,0,Math.PI*2); ctx.fill();
+    }
+    // Vorderkante (heller Streifen) + Erdwand mit Tiefe
+    ctx.fillStyle='#6aa84f'; ctx.fillRect(0,bodenY,W,7);
+    var eg = ctx.createLinearGradient(0,bodenY+7,0,H);
+    eg.addColorStop(0,'#a9794b'); eg.addColorStop(1,'#7c5631');
+    ctx.fillStyle=eg; ctx.fillRect(0,bodenY+7,W,H-bodenY-7);
+    ctx.fillStyle='rgba(0,0,0,0.10)'; ctx.fillRect(0,bodenY+7+(H-bodenY)*0.45,W,3);
+  }
+
+  function bodenSchatten(x, objY, breite, maxHoehe){
+    var hoehe = Math.max(0, bodenY - objY);
+    var f = Math.max(0, 1 - hoehe/(maxHoehe||260));
+    ctx.save(); ctx.fillStyle='rgba(0,0,0,'+(0.22*f)+')';
+    ctx.beginPath(); ctx.ellipse(x, bodenY+2, breite*(0.5+f*0.5), 6*(0.5+f*0.5), 0,0,Math.PI*2); ctx.fill(); ctx.restore();
+  }
+
+  function sternZeichnen(x,y,r,blink){
+    var pul = 1 + Math.sin(blink)*0.08;
+    ctx.save(); ctx.translate(x,y); ctx.scale(pul,pul);
+    var g=ctx.createRadialGradient(-r*0.3,-r*0.3,1,0,0,r);
+    g.addColorStop(0,'#fff4b8'); g.addColorStop(1,'#f59e0b');
+    ctx.fillStyle=g;
+    ctx.beginPath();
+    for(var i=0;i<5;i++){
+      var a=-Math.PI/2 + i*2*Math.PI/5;
+      ctx.lineTo(Math.cos(a)*r, Math.sin(a)*r);
+      var a2=a+Math.PI/5;
+      ctx.lineTo(Math.cos(a2)*r*0.45, Math.sin(a2)*r*0.45);
+    }
+    ctx.closePath(); ctx.fill();
+    ctx.fillStyle='rgba(255,255,255,0.8)'; ctx.beginPath(); ctx.arc(-r*0.25,-r*0.25,r*0.18,0,Math.PI*2); ctx.fill();
+    ctx.restore();
+  }
+
+  function teufelZeichnen(x,y,w,h){
+    bodenSchatten(x+w/2, bodenY, w*0.7, 1);
+    ctx.save(); ctx.translate(x,y);
+    var g=ctx.createRadialGradient(w*0.35,h*0.3,4,w*0.5,h*0.5,w*0.8);
+    g.addColorStop(0,'#a78bfa'); g.addColorStop(1,'#7c3aed');
+    ctx.fillStyle=g; rundRect(0,0,w,h,11); ctx.fill();
+    ctx.fillStyle='#5b21b6';
+    ctx.beginPath();ctx.moveTo(6,0);ctx.lineTo(11,-9);ctx.lineTo(15,0);ctx.fill();
+    ctx.beginPath();ctx.moveTo(w-15,0);ctx.lineTo(w-11,-9);ctx.lineTo(w-6,0);ctx.fill();
+    ctx.fillStyle='#fff'; ctx.beginPath();ctx.arc(13,16,6,0,Math.PI*2);ctx.arc(w-13,16,6,0,Math.PI*2);ctx.fill();
+    ctx.fillStyle='#1e293b'; ctx.beginPath();ctx.arc(13,17,3,0,Math.PI*2);ctx.arc(w-13,17,3,0,Math.PI*2);ctx.fill();
+    ctx.strokeStyle='#fff';ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(11,28);ctx.lineTo(16,24);ctx.lineTo(21,28);ctx.lineTo(26,24);ctx.lineTo(31,28);ctx.stroke();
+    ctx.restore();
+  }
+
+  function ballonZeichnen(x,y,r,wort,gewonnen){
+    bodenSchatten(x, y, r*1.1, 320);
+    ctx.save();
+    ctx.strokeStyle='rgba(0,0,0,0.22)'; ctx.lineWidth=2;
+    ctx.beginPath(); ctx.moveTo(x, y+r); ctx.quadraticCurveTo(x+7,y+r+18,x,y+r+34); ctx.stroke();
+    var hell = gewonnen ? '#86efac' : '#fed7aa';
+    var mit  = gewonnen ? '#22c55e' : '#fb923c';
+    var dun  = gewonnen ? '#15803d' : '#ea580c';
+    var g=ctx.createRadialGradient(x-r*0.35,y-r*0.4,2,x,y,r*1.2);
+    g.addColorStop(0,hell); g.addColorStop(0.5,mit); g.addColorStop(1,dun);
+    ctx.fillStyle=g;
+    ctx.beginPath(); ctx.ellipse(x,y,r,r*1.12,0,0,Math.PI*2); ctx.fill();
+    ctx.fillStyle='rgba(255,255,255,0.55)';
+    ctx.beginPath(); ctx.ellipse(x-r*0.34,y-r*0.42,r*0.22,r*0.34,-0.4,0,Math.PI*2); ctx.fill();
+    ctx.fillStyle=dun;
+    ctx.beginPath(); ctx.moveTo(x-6,y+r*1.08); ctx.lineTo(x+6,y+r*1.08); ctx.lineTo(x,y+r*1.24); ctx.fill();
+    ctx.fillStyle='rgba(0,0,0,0.18)'; ctx.font="700 "+Math.max(13,Math.min(20,150/wort.length))+"px Fredoka, sans-serif";
+    ctx.textAlign='center'; ctx.textBaseline='middle';
+    ctx.fillText(wort, x, y+1.5);
+    ctx.fillStyle='#fff'; ctx.fillText(wort, x, y);
+    ctx.restore();
+  }
+
+  function heldZeichnen(x,y){
+    var sprungH = bodenY - (y+held.h);
+    bodenSchatten(x+held.w/2, y+held.h, held.w*0.55, 300);
+    ctx.save();
+    if(held.unverwundbar>0 && Math.floor(held.unverwundbar/4)%2===0) ctx.globalAlpha=0.4;
+    var w=held.w, h=held.h;
+    var huepf = held.amBoden ? Math.sin(held.lauf)*2 : 0;
+    ctx.translate(x, y+huepf);
+    var cg=ctx.createLinearGradient(0,18,0,h);
+    cg.addColorStop(0,'#f59e0b'); cg.addColorStop(1,'#c2660a');
+    ctx.fillStyle=cg; rundRect(4,18,w-8,h-18,9); ctx.fill();
+    ctx.fillStyle='rgba(255,255,255,0.18)'; rundRect(7,21,8,h-24,4); ctx.fill();
+    var kg=ctx.createRadialGradient(w/2-4,12,2,w/2,16,15);
+    kg.addColorStop(0,'#ffe6c9'); kg.addColorStop(1,'#f0bb8e');
+    ctx.fillStyle=kg; ctx.beginPath(); ctx.arc(w/2,16,13,0,Math.PI*2); ctx.fill();
+    ctx.fillStyle='#7c3a0e'; rundRect(w/2-16,5,32,6,3); ctx.fill();
+    ctx.fillStyle='#92400e'; rundRect(w/2-11,-4,22,11,4); ctx.fill();
+    ctx.fillStyle='#1e293b';
+    var ax = held.blickRechts ? w/2+4 : w/2-4;
+    ctx.beginPath(); ctx.arc(ax,16,2.6,0,Math.PI*2); ctx.fill();
+    ctx.strokeStyle='#1e293b'; ctx.lineWidth=3;
+    var lx = held.blickRechts ? w-2 : 2;
+    ctx.beginPath(); ctx.arc(lx,30,7,0,Math.PI*2); ctx.stroke();
+    ctx.fillStyle='rgba(173,216,230,0.4)'; ctx.beginPath(); ctx.arc(lx,30,5,0,Math.PI*2); ctx.fill();
+    ctx.restore();
+  }
+
+  function rundRect(x,y,w,h,r){
+    ctx.beginPath(); ctx.moveTo(x+r,y);
+    ctx.arcTo(x+w,y,x+w,y+h,r); ctx.arcTo(x+w,y+h,x,y+h,r);
+    ctx.arcTo(x,y+h,x,y,r); ctx.arcTo(x,y,x+w,y,r); ctx.closePath();
+  }
+
+  function vignette(){
+    var g=ctx.createRadialGradient(W/2,H/2,H*0.4,W/2,H/2,H*0.85);
+    g.addColorStop(0,'rgba(0,0,0,0)'); g.addColorStop(1,'rgba(0,0,0,0.12)');
+    ctx.fillStyle=g; ctx.fillRect(0,0,W,H);
+  }
+
+  function zeichnen(){
+    ctx.save();
+    var sx=0, sy=0;
+    if(bildschirmRuettel>0){ sx=(Math.random()-0.5)*8; sy=(Math.random()-0.5)*8; }
+    ctx.translate(sx,sy);
+    ctx.clearRect(-12,-12,W+24,H+24);
+
+    himmel();
+    parallaxBerge();
+    wolkenZeichnen();
+    boden();
+
+    var i;
+    for(i=0;i<sterne.length;i++){ var s=sterne[i]; if(s.weg) continue; sternZeichnen(s.x - kamera, s.y, s.r, s.blink); }
+    for(i=0;i<teufel.length;i++){ var t=teufel[i]; if(t.weg) continue; teufelZeichnen(t.x - kamera, t.y + Math.sin(t.t)*4, t.w, t.h); }
+    if(aktBallons){
+      for(i=0;i<aktBallons.items.length;i++){ var it=aktBallons.items[i]; if(it.weg) continue;
+        var by=it.y + Math.sin(it.wack)*5; ballonZeichnen(it.x - kamera, by, it.r, it.wort, aktBallons.geloest && it.korrekt);
+      }
+    }
+    heldZeichnen(held.x - kamera, held.y);
+    for(i=0;i<partikel.length;i++){ var p=partikel[i];
+      ctx.globalAlpha=Math.max(0,p.leben/30); ctx.fillStyle=p.farbe;
+      ctx.beginPath(); ctx.arc(p.x - kamera, p.y, p.r, 0, Math.PI*2); ctx.fill();
+    }
+    ctx.globalAlpha=1;
+    vignette();
+    ctx.restore();
+  }
+
+  function aktualAnzeigen(){
+    document.getElementById('herzen').textContent = herzen>0 ? '❤️'.repeat(herzen) : '💀';
+    document.getElementById('punkte').textContent = '⭐ ' + punkte;
+  }
+  function aktualSatzAnzeige(geloest){
+    var el = document.getElementById('satz');
+    var lab = document.getElementById('satzlabel');
+    if(!aktSatz){ el.textContent=''; return; }
+    if(geloest){
+      lab.textContent = 'Richtig! Das ist das Prädikat 🎉';
+      el.innerHTML = aktSatz.vor + ' <span class="luecke geloest">'+aktSatz.p+'</span> ' + aktSatz.nach;
+    } else {
+      lab.textContent = 'Spring zum richtigen Prädikat!';
+      el.innerHTML = aktSatz.vor + ' <span class="luecke">?</span> ' + aktSatz.nach;
+    }
+  }
+
+  function schleife(){ update(); zeichnen(); requestAnimationFrame(schleife); }
+
+  function starten(){
+    try{ if(!actx) actx=new (window.AudioContext||window.webkitAudioContext)(); if(actx.state==='suspended') actx.resume(); }catch(e){}
+    document.getElementById('schirm-start').classList.add('weg');
+    document.getElementById('schirm-ende').classList.add('weg');
+    neuStart();
+  }
+  function neuStartUndStart(){ document.getElementById('schirm-ende').classList.add('weg'); neuStart(); }
+
+  function spielEnde(){
+    zustand='ende';
+    var rekord = rekordHolen();
+    if(punkte>rekord){ rekordSetzen(punkte); }
+    var neuRek = Math.max(rekord, punkte);
+    document.getElementById('ende-titel').textContent = punkte>rekord ? 'Neuer Rekord! 🏆' : 'Spielende';
+    document.getElementById('ende-text').textContent = 'Du hast ' + geloesteSaetze + ' Prädikat'+(geloesteSaetze===1?'':'e')+' gefunden!';
+    document.getElementById('ende-punkte').textContent = punkte;
+    document.getElementById('ende-rekord').textContent = 'Bestleistung: ' + neuRek + ' ⭐';
+    document.getElementById('ende-saetze').textContent = lobtext();
+    document.getElementById('schirm-ende').classList.remove('weg');
+  }
+  function lobtext(){
+    if(geloesteSaetze>=10) return 'Wow, du bist ein echter Prädikat-Detektiv! 🕵️🔍';
+    if(geloesteSaetze>=5)  return 'Super gemacht – weiter so! 💪';
+    return 'Gut gestartet! Versuch es gleich nochmal. 🚀';
+  }
+
+  document.getElementById('los').addEventListener('click', starten);
+  document.getElementById('nochmal').addEventListener('click', neuStartUndStart);
+  window.addEventListener('resize', function(){ passeGroesse(); });
+
+  passeGroesse();
+  requestAnimationFrame(schleife);
+})();
+</script>
+<script>
+function fxConfetti(){
+  try{
+    if(window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    var c=document.getElementById('fxCanvas');
+    if(!c){ c=document.createElement('canvas'); c.id='fxCanvas';
+      c.style.cssText='position:fixed;inset:0;pointer-events:none;z-index:99998'; document.body.appendChild(c); }
+    var x=c.getContext('2d'); c.width=innerWidth; c.height=innerHeight;
+    var cols=['#3aa6ff','#16c784','#ffd23f','#ff7a59','#a06bff','#ff5fa2'], P=[];
+    for(var i=0;i<90;i++) P.push({x:Math.random()*c.width,y:-20-Math.random()*c.height*0.3,
+      r:5+Math.random()*6,vy:2+Math.random()*3.5,vx:-1.5+Math.random()*3,
+      rot:Math.random()*6.28,vr:-0.2+Math.random()*0.4,col:cols[i%cols.length]});
+    var fr=0;(function loop(){ x.clearRect(0,0,c.width,c.height); fr++;
+      P.forEach(function(p){ p.x+=p.vx; p.y+=p.vy; p.rot+=p.vr; p.vy+=0.05;
+        x.save(); x.translate(p.x,p.y); x.rotate(p.rot); x.fillStyle=p.col;
+        x.fillRect(-p.r/2,-p.r/2,p.r,p.r*0.6); x.restore(); });
+      if(fr<160) requestAnimationFrame(loop); else x.clearRect(0,0,c.width,c.height);
+    })();
+  }catch(e){}
+}
+</script>
+</body>
+</html>

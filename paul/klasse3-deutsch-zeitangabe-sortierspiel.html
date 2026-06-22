@@ -1,0 +1,491 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Zeit-Baumeister</title>
+<style>
+  :root{
+    --sky1:#8fd0ff; --sky2:#bfe6ff;
+    --grass:#5fae3a; --grass-d:#4a8c2c;
+    --dirt:#8a5a2b; --dirt-d:#6b4420;
+    --wood:#b07a3d; --wood-d:#8a5e2b;
+    --ink:#21311f; --paper:#fffdf5;
+    --wann:#ffb400; --oft:#3aa0ff; --lange:#34c759; --seit:#b366ff; --ort:#ff5b5b;
+    --shadow: 0 6px 0 rgba(0,0,0,.18);
+    --font: "Segoe UI", system-ui, -apple-system, Roboto, sans-serif;
+    --mono: "SF Mono", ui-monospace, Consolas, monospace;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+  html,body{margin:0;height:100%;}
+  body{
+    font-family:var(--font); color:var(--ink); overflow-x:hidden;
+    min-height:100vh;
+    background:
+      linear-gradient(180deg, var(--sky1) 0%, var(--sky2) 42%, var(--grass) 42%, var(--grass) 56%, var(--dirt) 56%, var(--dirt-d) 100%);
+    background-attachment:fixed;
+    -webkit-font-smoothing:antialiased;
+  }
+  /* pixel-Wolken */
+  .cloud{position:fixed;top:0;left:0;width:60px;height:24px;background:#fff;opacity:.9;
+    box-shadow: 22px -10px 0 0 #fff, 44px 0 0 0 #fff, -6px 4px 0 0 #fff, 52px 6px 0 0 #fff;
+    z-index:-1;border-radius:4px;animation:cloud 70s linear infinite;}
+  .cloud.c2{top:60px;transform:scale(.7);animation-duration:95s;animation-delay:-30s;}
+  .cloud.c3{top:24px;transform:scale(1.2);animation-duration:120s;animation-delay:-60s;}
+  @keyframes cloud{from{left:-120px;}to{left:110%;}}
+
+  .home{
+    position:fixed;top:12px;left:12px;z-index:40;
+    display:inline-flex;align-items:center;gap:6px;cursor:pointer;
+    font-family:var(--font);font-weight:800;font-size:14px;color:#fff;text-decoration:none;
+    background:#3a3f4a;border:3px solid #20242c;border-bottom-width:5px;
+    padding:7px 12px;border-radius:6px;box-shadow:var(--shadow);
+  }
+  .home:active{transform:translateY(2px);border-bottom-width:3px;}
+
+  .wrap{max-width:720px;margin:0 auto;padding:58px 14px 26px;}
+
+  /* HUD */
+  .hud{
+    background:rgba(255,255,255,.92);border:3px solid #2a2f25;border-radius:12px;
+    padding:10px 12px;box-shadow:var(--shadow);margin-bottom:14px;
+  }
+  .hudtop{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;}
+  .rank{display:flex;align-items:center;gap:9px;min-width:0;}
+  .rank .re{font-size:26px;line-height:1;flex:none;}
+  .rank .rt{font-weight:900;font-size:15px;letter-spacing:.01em;}
+  .rank .rl{font-size:11.5px;color:#6a6f60;font-weight:700;}
+  .hudbtns{display:flex;gap:7px;flex:none;}
+  .hb{border:none;background:#eef0e8;border:2px solid #cdd2c2;border-radius:8px;
+    padding:6px 9px;font-size:14px;cursor:pointer;font-family:var(--font);font-weight:800;color:#3a402f;}
+  .hb:active{transform:translateY(1px);}
+  .stats{display:flex;gap:8px;margin-top:9px;flex-wrap:wrap;}
+  .chip{flex:1;min-width:78px;background:#f5f3e8;border:2px solid #ded9c4;border-radius:8px;
+    padding:6px 8px;text-align:center;}
+  .chip .cv{font-family:var(--mono);font-weight:800;font-size:17px;line-height:1;}
+  .chip .cl{font-size:10.5px;color:#7a7768;font-weight:700;margin-top:3px;}
+  .xpwrap{margin-top:9px;}
+  .xpbar{height:14px;background:#e6e2d2;border:2px solid #cfc9b3;border-radius:8px;overflow:hidden;}
+  .xpfill{height:100%;width:0;background:linear-gradient(90deg,#ffd24a,#ff9d2e);transition:width .4s ease;}
+  .xptxt{font-size:11px;color:#7a7768;font-weight:700;margin-top:3px;text-align:right;}
+
+  /* Satz-Block */
+  .stage{position:relative;text-align:center;margin:6px 0 16px;min-height:128px;}
+  .satzcard{
+    display:inline-block;background:var(--paper);border:4px solid #2a2f25;
+    border-radius:12px;padding:20px 22px;box-shadow:var(--shadow);
+    font-size:21px;line-height:1.5;font-weight:600;max-width:100%;animation:drop .35s cubic-bezier(.2,1.3,.5,1);
+  }
+  @keyframes drop{from{transform:translateY(-34px);opacity:0;}to{transform:translateY(0);opacity:1;}}
+  .satzcard .lead{display:block;font-size:12.5px;font-weight:800;letter-spacing:.08em;
+    text-transform:uppercase;color:#9a9684;margin-bottom:10px;}
+  .zblock{
+    display:inline-block;background:linear-gradient(180deg,#ffe07a,#ffc02e);
+    border:3px solid #b5791a;border-bottom-width:5px;border-radius:6px;
+    padding:1px 9px;margin:0 2px;font-weight:900;color:#5a3c05;
+    box-shadow:0 3px 0 rgba(0,0,0,.12);
+  }
+
+  /* Truhen */
+  .chests{display:grid;grid-template-columns:repeat(2,1fr);gap:11px;}
+  @media(min-width:560px){.chests{grid-template-columns:repeat(4,1fr);}}
+  .chest{
+    cursor:pointer;border:none;font-family:var(--font);text-align:center;
+    background:linear-gradient(180deg,var(--wood),var(--wood-d));
+    border:4px solid #3a2710;border-radius:10px;padding:12px 8px 14px;
+    box-shadow:var(--shadow);position:relative;color:#fff;transition:transform .08s ease;
+  }
+  .chest:active{transform:translateY(3px);}
+  .chest .lid{height:16px;border-radius:6px 6px 3px 3px;border:3px solid #3a2710;
+    background:linear-gradient(180deg,#caa26b,#a9743b);margin:-4px -2px 9px;}
+  .chest .q{font-weight:900;font-size:15px;letter-spacing:.01em;text-shadow:0 2px 0 rgba(0,0,0,.25);}
+  .chest .qs{font-size:11px;font-weight:700;opacity:.92;margin-top:2px;}
+  .chest .lock{position:absolute;top:8px;right:9px;width:13px;height:11px;border-radius:2px;
+    border:3px solid #5a3a16;background:#e8c878;}
+  .chest[data-k="wann"] .lid{background:linear-gradient(180deg,#ffd98a,var(--wann));}
+  .chest[data-k="oft"] .lid{background:linear-gradient(180deg,#9fd0ff,var(--oft));}
+  .chest[data-k="lange"] .lid{background:linear-gradient(180deg,#8fe6aa,var(--lange));}
+  .chest[data-k="seit"] .lid{background:linear-gradient(180deg,#d6acff,var(--seit));}
+
+  .pit{
+    margin-top:11px;width:100%;cursor:pointer;font-family:var(--font);
+    background:linear-gradient(180deg,#3a3f4a,#23262e);border:4px solid #14161b;
+    border-radius:10px;padding:11px;color:#ffd0d0;font-weight:900;font-size:14.5px;
+    box-shadow:var(--shadow);transition:transform .08s ease;
+  }
+  .pit:active{transform:translateY(3px);}
+  .pit b{color:#ff8a8a;}
+
+  .chest.good,.pit.good{animation:goodpulse .5s ease;}
+  .chest.bad,.pit.bad{animation:shake .4s ease;}
+  @keyframes goodpulse{0%{filter:brightness(1);}40%{filter:brightness(1.5);}100%{filter:brightness(1);}}
+  @keyframes shake{0%,100%{transform:translateX(0);}25%{transform:translateX(-7px);}75%{transform:translateX(7px);}}
+
+  /* Toast */
+  .toast{
+    position:fixed;left:50%;bottom:18px;transform:translateX(-50%) translateY(120px);
+    background:#2a2f25;color:#fff;border:3px solid #fff;border-radius:12px;
+    padding:13px 18px;font-weight:800;font-size:15px;z-index:45;box-shadow:0 10px 28px rgba(0,0,0,.35);
+    transition:transform .3s cubic-bezier(.2,1.4,.5,1);max-width:90vw;text-align:center;line-height:1.35;
+  }
+  .toast.show{transform:translateX(-50%) translateY(0);}
+  .toast.win{background:#2e7d32;}
+  .toast.lose{background:#b23b3b;}
+
+  /* Rang-Aufstieg */
+  .overlay{position:fixed;inset:0;background:rgba(20,22,18,.55);display:none;
+    place-items:center;padding:20px;z-index:60;}
+  .overlay.on{display:grid;}
+  .modal{background:var(--paper);border:5px solid #2a2f25;border-radius:18px;
+    max-width:380px;width:100%;padding:26px 22px;text-align:center;box-shadow:0 24px 60px rgba(0,0,0,.4);
+    animation:drop .3s ease;}
+  .modal .be{font-size:62px;line-height:1;}
+  .modal h2{margin:8px 0 4px;font-size:23px;font-weight:900;}
+  .modal p{margin:0 0 16px;color:#6a6f60;font-weight:600;font-size:14.5px;}
+  .modal button{border:none;background:linear-gradient(180deg,#6ab04c,#4a8c2c);color:#fff;
+    border:3px solid #356b1f;border-bottom-width:5px;border-radius:10px;padding:12px 18px;
+    font-family:var(--font);font-weight:900;font-size:16px;cursor:pointer;width:100%;}
+  .modal button:active{transform:translateY(2px);border-bottom-width:3px;}
+
+  canvas#confetti{position:fixed;inset:0;pointer-events:none;z-index:55;}
+
+  .footnote{text-align:center;color:#fff;opacity:.85;font-size:12px;font-weight:700;
+    margin-top:18px;text-shadow:0 1px 2px rgba(0,0,0,.3);}
+
+  @media (prefers-reduced-motion: reduce){*{animation:none!important;transition:none!important;}}
+</style>
+</head>
+<body>
+  <div class="cloud"></div><div class="cloud c2"></div><div class="cloud c3"></div>
+  <a class="home" id="home">🏠 Startseite</a>
+
+  <div class="wrap">
+    <div class="hud">
+      <div class="hudtop">
+        <div class="rank">
+          <div class="re" id="rankEmj">🪵</div>
+          <div>
+            <div class="rt" id="rankName">Holz-Sammler</div>
+            <div class="rl">Zeit-Baumeister</div>
+          </div>
+        </div>
+        <div class="hudbtns">
+          <button class="hb" id="speakBtn" title="Satz vorlesen">🗣️</button>
+          <button class="hb" id="soundBtn" title="Ton an/aus">🔊</button>
+        </div>
+      </div>
+      <div class="stats">
+        <div class="chip"><div class="cv" id="sStreak">0</div><div class="cl">🔥 Serie</div></div>
+        <div class="chip"><div class="cv" id="sRight">0</div><div class="cl">✅ richtig</div></div>
+        <div class="chip"><div class="cv" id="sBest">0</div><div class="cl">🏆 Bestlauf</div></div>
+        <div class="chip"><div class="cv" id="sTodo">0</div><div class="cl">🔁 zu üben</div></div>
+      </div>
+      <div class="xpwrap">
+        <div class="xpbar"><div class="xpfill" id="xpFill"></div></div>
+        <div class="xptxt" id="xpTxt">0 XP</div>
+      </div>
+    </div>
+
+    <div class="stage">
+      <div class="satzcard" id="satz">
+        <span class="lead">In welche Truhe gehört der gelbe Block?</span>
+        <span id="satzText">Tippe auf „Los geht's!"</span>
+      </div>
+    </div>
+
+    <div class="chests">
+      <button class="chest" data-k="wann"><span class="lock"></span><div class="lid"></div><div class="q">WANN?</div><div class="qs">Zeitpunkt</div></button>
+      <button class="chest" data-k="oft"><span class="lock"></span><div class="lid"></div><div class="q">WIE OFT?</div><div class="qs">Häufigkeit</div></button>
+      <button class="chest" data-k="lange"><span class="lock"></span><div class="lid"></div><div class="q">WIE LANGE?</div><div class="qs">Dauer</div></button>
+      <button class="chest" data-k="seit"><span class="lock"></span><div class="lid"></div><div class="q">SEIT WANN?</div><div class="qs">seit damals</div></button>
+    </div>
+
+    <button class="pit" data-k="ort">⛏️ <b>KEINE ZEITANGABE</b> – das ist ein Ort! (Lava-Loch)</button>
+
+    <p class="footnote">🧱 Sortier so viele Zeitangaben, wie du kannst!</p>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <div class="overlay" id="rankOv">
+    <div class="modal">
+      <div class="be" id="ovEmj">⛏️</div>
+      <h2 id="ovTitle">Neuer Rang!</h2>
+      <p id="ovText"></p>
+      <button id="ovClose">Weiter bauen! 🧱</button>
+    </div>
+  </div>
+
+  <canvas id="confetti"></canvas>
+
+<script>
+(function(){
+  "use strict";
+
+  /* ---------- Speicher ---------- */
+  var P = "zeitangabe-";
+  function get(k,d){ try{var v=localStorage.getItem(P+k);return v==null?d:v;}catch(e){return d;} }
+  function set(k,v){ try{localStorage.setItem(P+k,v);}catch(e){} }
+
+  var xp      = parseInt(get("xp","0"),10)||0;
+  var right   = parseInt(get("right","0"),10)||0;
+  var wrong   = parseInt(get("wrong","0"),10)||0;
+  var best    = parseInt(get("beststreak","0"),10)||0;
+  var games   = parseInt(get("games","0"),10)||0;
+  var soundOn = get("sound","1")!=="0";
+  var todo    = [];
+  try{ todo = JSON.parse(get("mistakes","[]"))||[]; }catch(e){ todo=[]; }
+  games++; set("games",String(games));
+
+  /* ---------- Daten ---------- */
+  // cat: wann | oft | lange | seit | ort
+  var DATA = [
+    {s:"Heute spielt Paul am Computer.", z:"Heute", cat:"wann"},
+    {s:"Am Sonntag besuchen wir Oma.", z:"Am Sonntag", cat:"wann"},
+    {s:"Im Sommer fahren wir ans Meer.", z:"Im Sommer", cat:"wann"},
+    {s:"Um 8 Uhr klingelt der Wecker.", z:"Um 8 Uhr", cat:"wann"},
+    {s:"Morgen schreiben wir einen Test.", z:"Morgen", cat:"wann"},
+    {s:"Nach dem Essen räumt Leon den Tisch ab.", z:"Nach dem Essen", cat:"wann"},
+    {s:"Am Abend liest Papa eine Geschichte vor.", z:"Am Abend", cat:"wann"},
+    {s:"In den Ferien schlafe ich lange.", z:"In den Ferien", cat:"wann"},
+    {s:"Gestern hat es geschneit.", z:"Gestern", cat:"wann"},
+    {s:"Am Geburtstag gibt es Kuchen.", z:"Am Geburtstag", cat:"wann"},
+
+    {s:"Diana übt täglich das Einmaleins.", z:"täglich", cat:"oft"},
+    {s:"Wir gehen jeden Tag zur Schule.", z:"jeden Tag", cat:"oft"},
+    {s:"Im Winter schneit es oft.", z:"oft", cat:"oft"},
+    {s:"Paul putzt manchmal sein Zimmer.", z:"manchmal", cat:"oft"},
+    {s:"Montags haben wir Sport.", z:"Montags", cat:"oft"},
+    {s:"Mia trainiert dreimal in der Woche.", z:"dreimal in der Woche", cat:"oft"},
+    {s:"Der Hund bellt immer beim Briefträger.", z:"immer", cat:"oft"},
+    {s:"Wir feiern jedes Jahr ein großes Fest.", z:"jedes Jahr", cat:"oft"},
+
+    {s:"Wir haben stundenlang gespielt.", z:"stundenlang", cat:"lange"},
+    {s:"Paul war den ganzen Tag draußen.", z:"den ganzen Tag", cat:"lange"},
+    {s:"Die Wanderung dauerte drei Stunden lang.", z:"drei Stunden lang", cat:"lange"},
+    {s:"Wir bleiben eine Woche im Zelt.", z:"eine Woche", cat:"lange"},
+    {s:"Leon spielte lange am Klavier.", z:"lange", cat:"lange"},
+    {s:"Wir warteten eine halbe Stunde auf den Bus.", z:"eine halbe Stunde", cat:"lange"},
+    {s:"Der Film dauerte zwei Stunden.", z:"zwei Stunden", cat:"lange"},
+
+    {s:"Seit gestern blühen die Tulpen.", z:"Seit gestern", cat:"seit"},
+    {s:"Es regnet seit Stunden.", z:"seit Stunden", cat:"seit"},
+    {s:"Wir wohnen seit drei Jahren hier.", z:"seit drei Jahren", cat:"seit"},
+    {s:"Seit Montag bin ich erkältet.", z:"Seit Montag", cat:"seit"},
+    {s:"Paul lernt seit einer Woche für den Test.", z:"seit einer Woche", cat:"seit"},
+    {s:"Seit heute Morgen scheint die Sonne.", z:"Seit heute Morgen", cat:"seit"},
+
+    {s:"Lara joggt im Wald.", z:"im Wald", cat:"ort"},
+    {s:"Wir fahren ans Meer.", z:"ans Meer", cat:"ort"},
+    {s:"Die Kinder spielen auf dem Spielplatz.", z:"auf dem Spielplatz", cat:"ort"},
+    {s:"Paul macht seine Hausaufgaben zu Hause.", z:"zu Hause", cat:"ort"},
+    {s:"Der Ball liegt hinter dem Haus.", z:"hinter dem Haus", cat:"ort"},
+    {s:"Familie Reisefreund fährt nach Italien.", z:"nach Italien", cat:"ort"}
+  ];
+
+  var CATNAME = {wann:"Zeitpunkt (Wann?)", oft:"Häufigkeit (Wie oft?)", lange:"Dauer (Wie lange?)", seit:"seit wann?", ort:"Ortsangabe – keine Zeit!"};
+  var PRAISE = ["Stark! 🧱","Perfekt sortiert! ✨","Volltreffer! 🎯","Mega! 🚀","Richtig gebaut! 🏗️","Klasse! 💎","Sauber! ⛏️"];
+
+  /* ---------- Ränge ---------- */
+  var RANKS = [
+    {min:0,   name:"Holz-Sammler",    emj:"🪵"},
+    {min:60,  name:"Stein-Sortierer", emj:"🪨"},
+    {min:150, name:"Eisen-Kenner",    emj:"⛏️"},
+    {min:300, name:"Gold-Profi",      emj:"🟨"},
+    {min:500, name:"Diamant-Meister", emj:"💎"},
+    {min:800, name:"Zeit-Baumeister", emj:"🏗️"}
+  ];
+  function rankFor(x){ var r=RANKS[0]; for(var i=0;i<RANKS.length;i++){ if(x>=RANKS[i].min) r=RANKS[i]; } return r; }
+
+  /* ---------- DOM ---------- */
+  var $ = function(id){ return document.getElementById(id); };
+  var streak = 0, cur = null, lastIdx = -1, locked = false, session = 0;
+
+  /* ---------- Home ---------- */
+  (function(){
+    var url = "index.html";
+    try{ var h=localStorage.getItem("hub-url"); if(h) url=h; }catch(e){}
+    $("home").setAttribute("href", url);
+  })();
+
+  /* ---------- Sound ---------- */
+  var actx=null;
+  function tone(f,dur,delay,type){
+    if(!soundOn) return;
+    try{
+      actx = actx || new (window.AudioContext||window.webkitAudioContext)();
+      var o=actx.createOscillator(), g=actx.createGain();
+      o.type=type||"sine"; o.frequency.value=f;
+      var t0=actx.currentTime+(delay||0);
+      g.gain.setValueAtTime(0,t0);
+      g.gain.linearRampToValueAtTime(.16,t0+.02);
+      g.gain.exponentialRampToValueAtTime(.0001,t0+dur);
+      o.connect(g); g.connect(actx.destination);
+      o.start(t0); o.stop(t0+dur+.02);
+    }catch(e){}
+  }
+  function sGood(){ tone(523,.12,0,"triangle"); tone(784,.16,.1,"triangle"); }
+  function sBad(){ tone(196,.22,0,"sawtooth"); }
+  function sUp(){ tone(523,.14,0); tone(659,.14,.12); tone(784,.14,.24); tone(1046,.3,.36); }
+
+  function paintSound(){ $("soundBtn").textContent = soundOn ? "🔊" : "🔈"; }
+  $("soundBtn").addEventListener("click", function(){
+    soundOn=!soundOn; set("sound", soundOn?"1":"0"); paintSound(); if(soundOn) sGood();
+  });
+  paintSound();
+
+  /* ---------- Vorlesen ---------- */
+  $("speakBtn").addEventListener("click", function(){
+    if(!cur) return;
+    try{
+      var u=new SpeechSynthesisUtterance(cur.s); u.lang="de-DE"; u.rate=.95;
+      speechSynthesis.cancel(); speechSynthesis.speak(u);
+    }catch(e){}
+  });
+
+  /* ---------- HUD malen ---------- */
+  function paintHud(){
+    var r=rankFor(xp), next=null;
+    for(var i=0;i<RANKS.length;i++){ if(RANKS[i].min>xp){ next=RANKS[i]; break; } }
+    $("rankEmj").textContent=r.emj;
+    $("rankName").textContent=r.name;
+    $("sStreak").textContent=streak;
+    $("sRight").textContent=right;
+    $("sBest").textContent=best;
+    $("sTodo").textContent=todo.length;
+    var pct, lbl;
+    if(next){ pct=Math.round((xp-r.min)/(next.min-r.min)*100); lbl=xp+" / "+next.min+" XP"; }
+    else { pct=100; lbl=xp+" XP – Maximum! 🏗️"; }
+    $("xpFill").style.width=Math.max(0,Math.min(100,pct))+"%";
+    $("xpTxt").textContent=lbl;
+  }
+
+  /* ---------- nächste Aufgabe ---------- */
+  function nextItem(){
+    var idx;
+    if(todo.length && Math.random()<0.32){
+      idx = todo[Math.floor(Math.random()*todo.length)];
+      cur = {data:DATA[idx], idx:idx, review:true};
+    } else {
+      do { idx = Math.floor(Math.random()*DATA.length); } while(idx===lastIdx && DATA.length>1);
+      cur = {data:DATA[idx], idx:idx, review:false};
+    }
+    lastIdx = idx;
+    render();
+  }
+
+  function render(){
+    var d=cur.data;
+    var i=d.s.indexOf(d.z);
+    var before=i>=0?d.s.slice(0,i):"";
+    var after =i>=0?d.s.slice(i+d.z.length):"";
+    var lead = cur.review ? '🔁 Nochmal: In welche Truhe gehört der gelbe Block?'
+                          : 'In welche Truhe gehört der gelbe Block?';
+    $("satz").innerHTML =
+      '<span class="lead">'+lead+'</span>'+
+      '<span id="satzText">'+esc(before)+'<span class="zblock">'+esc(d.z)+'</span>'+esc(after)+'</span>';
+  }
+  function esc(t){ return t.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;"); }
+
+  /* ---------- Antwort ---------- */
+  function answer(k, el){
+    if(locked || !cur) return;
+    locked = true;
+    var d=cur.data, ok=(k===d.cat);
+    if(ok){
+      var gain=10; if(streak>=4) gain=20; else if(streak>=2) gain=15;
+      streak++; right++; xp+=gain; session++;
+      if(streak>best){ best=streak; set("beststreak",String(best)); }
+      // aus Üben-Liste entfernen, wenn geschafft
+      var pos=todo.indexOf(cur.idx); if(pos>=0){ todo.splice(pos,1); set("mistakes",JSON.stringify(todo)); }
+      set("xp",String(xp)); set("right",String(right));
+      el.classList.add("good"); sGood();
+      toast(PRAISE[Math.floor(Math.random()*PRAISE.length)]+" +"+gain+" XP", "win");
+      checkRank();
+      if(session>0 && session%10===0){ confetti(); }
+    } else {
+      streak=0; wrong++; set("wrong",String(wrong));
+      if(todo.indexOf(cur.idx)<0){ todo.push(cur.idx); set("mistakes",JSON.stringify(todo)); }
+      el.classList.add("bad"); sBad();
+      var richtig = (d.cat==="ort")
+        ? '„'+d.z+'" ist ein <b>Ort</b> – ab ins Lava-Loch! ⛏️'
+        : '„'+d.z+'" antwortet auf <b>'+CATNAME[d.cat]+'</b>';
+      toast("Fast! "+richtig, "lose", 2400);
+    }
+    paintHud();
+    setTimeout(function(){
+      el.classList.remove("good","bad");
+      locked=false;
+      nextItem();
+    }, ok?700:2200);
+  }
+
+  /* ---------- Rang-Check ---------- */
+  var shownRank = rankFor(parseInt(get("xp","0"),10)||0).name;
+  function checkRank(){
+    var r=rankFor(xp);
+    if(r.name!==shownRank){
+      shownRank=r.name;
+      $("ovEmj").textContent=r.emj;
+      $("ovTitle").textContent="Neuer Rang: "+r.name+"!";
+      $("ovText").textContent="Du sortierst die Zeitangaben immer besser. Weiter so! 🧱";
+      $("rankOv").classList.add("on");
+      sUp(); confetti();
+    }
+  }
+  $("ovClose").addEventListener("click", function(){ $("rankOv").classList.remove("on"); });
+
+  /* ---------- Toast ---------- */
+  var toastT=null;
+  function toast(html, cls, ms){
+    var t=$("toast");
+    t.className="toast "+(cls||"")+" show";
+    t.innerHTML=html;
+    clearTimeout(toastT);
+    toastT=setTimeout(function(){ t.className="toast "+(cls||""); }, ms||1300);
+  }
+
+  /* ---------- Konfetti ---------- */
+  function confetti(){
+    if(window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    var c=$("confetti"), x=c.getContext("2d");
+    c.width=innerWidth; c.height=innerHeight;
+    var cols=["#ffb400","#3aa0ff","#34c759","#b366ff","#ff5b5b","#ffd24a"];
+    var Pp=[];
+    for(var i=0;i<120;i++){
+      Pp.push({x:Math.random()*c.width,y:-20-Math.random()*c.height*.4,
+        r:5+Math.random()*7,vy:2+Math.random()*3.5,vx:-1.5+Math.random()*3,
+        rot:Math.random()*6.28,vr:-.2+Math.random()*.4,col:cols[i%cols.length]});
+    }
+    var fr=0;
+    (function loop(){
+      x.clearRect(0,0,c.width,c.height); fr++;
+      for(var i=0;i<Pp.length;i++){var p=Pp[i];
+        p.x+=p.vx; p.y+=p.vy; p.rot+=p.vr; p.vy+=.05;
+        x.save(); x.translate(p.x,p.y); x.rotate(p.rot); x.fillStyle=p.col;
+        x.fillRect(-p.r/2,-p.r/2,p.r,p.r); x.restore();
+      }
+      if(fr<210) requestAnimationFrame(loop);
+      else x.clearRect(0,0,c.width,c.height);
+    })();
+  }
+
+  /* ---------- Buttons binden ---------- */
+  var targets=document.querySelectorAll(".chest, .pit");
+  for(var i=0;i<targets.length;i++){
+    (function(el){
+      el.addEventListener("click", function(){ answer(el.getAttribute("data-k"), el); });
+    })(targets[i]);
+  }
+
+  /* ---------- Start ---------- */
+  paintHud();
+  // erste Karte als Begrüßung, beim ersten Tap auf eine Truhe startet das Spiel
+  cur = null;
+  $("satzText").textContent = "Tippe los – sortier den ersten Block!";
+  // Wir starten direkt mit einer echten Aufgabe:
+  nextItem();
+})();
+</script>
+</body>
+</html>

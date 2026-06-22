@@ -1,0 +1,885 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Satz-Detektiv – Das Prädikat finden</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Nunito:wght@400;600;700;800&family=Courier+Prime:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper:#eef1f7;
+    --card:#ffffff;
+    --ink:#1e2749;
+    --ink-soft:#5a6485;
+    --amber:#f4a828;
+    --amber-deep:#d98a0c;
+    --green:#2fa86b;
+    --green-soft:#e3f5ec;
+    --red:#e8533a;
+    --red-soft:#fdece8;
+    --line:#dfe3ee;
+    --shadow:0 18px 40px -18px rgba(30,39,73,.35);
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    font-family:'Nunito',system-ui,sans-serif;
+    background:
+      radial-gradient(circle at 18% -10%, #f7e7c4 0%, transparent 42%),
+      radial-gradient(circle at 100% 110%, #d8def0 0%, transparent 48%),
+      var(--paper);
+    color:var(--ink);
+    min-height:100vh;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    padding:20px;
+    -webkit-tap-highlight-color:transparent;
+  }
+  .case{
+    width:100%;
+    max-width:600px;
+    background:var(--card);
+    border-radius:26px;
+    box-shadow:var(--shadow);
+    border:1px solid var(--line);
+    overflow:hidden;
+  }
+  .topbar{
+    background:linear-gradient(135deg,#222c52,#1a2342);
+    color:#fff;
+    padding:18px 24px;
+    display:flex;
+    align-items:center;
+    gap:12px;
+  }
+  .glass{
+    width:38px;height:38px;flex:none;
+    display:grid;place-items:center;
+  }
+  .glass svg{width:34px;height:34px;}
+  .brand{font-family:'Fredoka',sans-serif;font-weight:600;font-size:1.25rem;letter-spacing:.3px;}
+  .brand small{display:block;font-family:'Courier Prime',monospace;font-weight:400;font-size:.62rem;letter-spacing:2px;text-transform:uppercase;color:#f4cf95;margin-top:1px;}
+
+  .body{padding:26px 24px 28px;}
+
+  .meta{display:flex;align-items:center;justify-content:space-between;gap:14px;margin-bottom:6px;}
+  .fall{font-family:'Courier Prime',monospace;font-size:.72rem;letter-spacing:2px;text-transform:uppercase;color:var(--ink-soft);}
+  .score{font-weight:800;font-size:.85rem;color:var(--amber-deep);background:#fdf3e0;padding:4px 11px;border-radius:999px;white-space:nowrap;}
+  .bar{height:9px;background:#e7eaf3;border-radius:999px;overflow:hidden;margin:8px 0 22px;}
+  .bar > i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--amber),var(--amber-deep));border-radius:999px;transition:width .4s ease;}
+
+  .clueline{
+    background:#fbf7ee;
+    border:2px dashed #e7c98c;
+    border-radius:16px;
+    padding:18px 18px;
+    font-size:1.5rem;
+    line-height:1.45;
+    text-align:center;
+    color:var(--ink);
+    margin-bottom:20px;
+    font-weight:700;
+  }
+  .clueline .word{position:relative;display:inline-block;padding:0 2px;transition:color .25s ease;}
+  .clueline.found .word.target{color:var(--amber-deep);}
+  .clueline.found .word.target::after{
+    content:"";position:absolute;inset:-6px -7px;
+    border:2.5px solid var(--amber);border-radius:50%;
+    transform:rotate(-4deg);
+    animation:circle .5s ease both;
+  }
+  @keyframes circle{from{opacity:0;transform:rotate(-4deg) scale(.6);}to{opacity:1;transform:rotate(-4deg) scale(1);}}
+
+  .question{font-family:'Fredoka',sans-serif;font-weight:500;font-size:1.32rem;line-height:1.3;margin:0 0 18px;}
+
+  .options{display:grid;gap:11px;}
+  .opt{
+    font-family:'Nunito',sans-serif;
+    font-size:1.12rem;font-weight:700;
+    text-align:left;
+    background:#fff;
+    color:var(--ink);
+    border:2px solid var(--line);
+    border-radius:14px;
+    padding:15px 18px;
+    cursor:pointer;
+    transition:transform .12s ease,border-color .15s ease,background .15s ease;
+    display:flex;align-items:center;gap:12px;
+  }
+  .opt .pin{width:22px;height:22px;flex:none;border-radius:50%;border:2px solid var(--line);display:grid;place-items:center;font-size:.85rem;}
+  .opt:hover:not(:disabled){border-color:var(--amber);transform:translateY(-2px);}
+  .opt:focus-visible{outline:3px solid var(--amber);outline-offset:2px;}
+  .opt:disabled{cursor:default;}
+  .opt.correct{border-color:var(--green);background:var(--green-soft);}
+  .opt.correct .pin{border-color:var(--green);background:var(--green);color:#fff;}
+  .opt.wrong{border-color:var(--red);background:var(--red-soft);}
+  .opt.wrong .pin{border-color:var(--red);background:var(--red);color:#fff;}
+  .opt.dim{opacity:.5;}
+
+  .feedback{margin-top:20px;display:none;}
+  .feedback.show{display:block;animation:rise .35s ease both;}
+  @keyframes rise{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:none;}}
+  .fb-tag{font-family:'Fredoka',sans-serif;font-weight:600;font-size:1.1rem;display:flex;align-items:center;gap:8px;margin-bottom:6px;}
+  .fb-tag.ok{color:var(--green);}
+  .fb-tag.no{color:var(--red);}
+  .fb-text{color:var(--ink-soft);font-size:1.02rem;line-height:1.5;font-weight:600;}
+
+  .btn{
+    font-family:'Fredoka',sans-serif;font-weight:600;font-size:1.15rem;
+    border:none;border-radius:14px;padding:15px 22px;cursor:pointer;
+    background:linear-gradient(135deg,var(--amber),var(--amber-deep));
+    color:#fff;box-shadow:0 8px 18px -8px var(--amber-deep);
+    transition:transform .12s ease,filter .15s ease;
+    width:100%;margin-top:18px;
+  }
+  .btn:hover{transform:translateY(-2px);filter:brightness(1.04);}
+  .btn:focus-visible{outline:3px solid var(--ink);outline-offset:2px;}
+
+  .center{text-align:center;}
+  .hello{font-family:'Fredoka',sans-serif;font-weight:700;font-size:2rem;margin:6px 0 4px;color:var(--ink);}
+  .lead{color:var(--ink-soft);font-size:1.1rem;font-weight:600;line-height:1.55;max-width:430px;margin:0 auto 6px;}
+  .badgebig{font-size:3.6rem;line-height:1;margin:10px 0 4px;}
+  .rank{font-family:'Fredoka',sans-serif;font-weight:700;font-size:1.7rem;margin:6px 0 2px;}
+  .result{color:var(--ink-soft);font-weight:700;font-size:1.15rem;margin-bottom:4px;}
+  .tips{
+    text-align:left;background:#fbf7ee;border-radius:14px;padding:14px 16px;margin:18px 0 4px;
+    font-size:.98rem;color:var(--ink-soft);font-weight:600;line-height:1.5;
+  }
+  .tips b{color:var(--ink);}
+  .tips ul{margin:8px 0 0;padding-left:20px;}
+  .tips li{margin:3px 0;}
+
+  @media (max-width:430px){
+    .body{padding:22px 18px 24px;}
+    .clueline{font-size:1.28rem;}
+    .question{font-size:1.18rem;}
+    .opt{font-size:1.02rem;}
+    .hello{font-size:1.7rem;}
+  }
+  @media (prefers-reduced-motion: reduce){
+    *{animation:none !important;transition:none !important;}
+  }
+
+  /* ---- Hilfe-Detektiv ---- */
+  .help-fab{
+    position:fixed;bottom:20px;right:20px;z-index:50;
+    width:60px;height:60px;border-radius:50%;border:none;cursor:pointer;
+    background:linear-gradient(135deg,var(--amber),var(--amber-deep));
+    box-shadow:0 10px 24px -8px var(--amber-deep);
+    display:grid;place-items:center;
+    transition:transform .15s ease;
+  }
+  .help-fab:hover{transform:translateY(-2px) scale(1.05);}
+  .help-fab:focus-visible{outline:3px solid var(--ink);outline-offset:3px;}
+  .help-fab svg{width:30px;height:30px;}
+  .help-fab .ping{
+    position:absolute;top:-3px;right:-3px;width:18px;height:18px;border-radius:50%;
+    background:var(--green);color:#fff;font-size:.72rem;font-weight:800;
+    display:grid;place-items:center;border:2px solid #fff;
+  }
+  .help-overlay{
+    position:fixed;inset:0;z-index:60;display:none;
+    align-items:flex-end;justify-content:flex-end;
+    padding:18px;background:rgba(22,28,50,.45);
+  }
+  .help-overlay.open{display:flex;animation:fade .2s ease;}
+  @keyframes fade{from{opacity:0;}to{opacity:1;}}
+  .help-panel{
+    width:min(380px,100%);height:min(560px,82vh);
+    background:#fff;border-radius:22px;overflow:hidden;
+    display:flex;flex-direction:column;
+    box-shadow:0 24px 60px -20px rgba(20,25,45,.6);
+    animation:slideup .25s ease;
+  }
+  @keyframes slideup{from{transform:translateY(18px);opacity:0;}to{transform:none;opacity:1;}}
+  .help-head{
+    background:linear-gradient(135deg,#222c52,#1a2342);color:#fff;
+    padding:14px 16px;display:flex;align-items:center;gap:10px;
+  }
+  .help-head .av{width:36px;height:36px;border-radius:50%;background:#f4a828;display:grid;place-items:center;font-size:1.1rem;flex:none;}
+  .help-head .ttl{font-family:'Fredoka',sans-serif;font-weight:600;font-size:1.05rem;line-height:1.1;}
+  .help-head .ttl small{display:block;font-family:'Courier Prime',monospace;font-weight:400;font-size:.58rem;letter-spacing:1.5px;text-transform:uppercase;color:#f4cf95;}
+  .help-head .x{margin-left:auto;background:rgba(255,255,255,.15);border:none;color:#fff;width:30px;height:30px;border-radius:50%;cursor:pointer;font-size:1rem;line-height:1;}
+  .help-head .x:hover{background:rgba(255,255,255,.28);}
+  .help-chat{flex:1;min-height:130px;overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:10px;background:#f6f7fb;}
+  .msg{max-width:84%;padding:11px 14px;border-radius:16px;font-size:1rem;font-weight:600;line-height:1.45;}
+  .msg.bot{align-self:flex-start;background:#fff;color:var(--ink);border:1px solid var(--line);border-bottom-left-radius:5px;}
+  .msg.me{align-self:flex-end;background:linear-gradient(135deg,var(--amber),var(--amber-deep));color:#fff;border-bottom-right-radius:5px;}
+  .msg.typing{display:flex;gap:4px;align-items:center;}
+  .msg.typing span{width:7px;height:7px;border-radius:50%;background:#b9c0d4;animation:blink 1s infinite;}
+  .msg.typing span:nth-child(2){animation-delay:.2s;}
+  .msg.typing span:nth-child(3){animation-delay:.4s;}
+  @keyframes blink{0%,80%,100%{opacity:.3;}40%{opacity:1;}}
+  .chips{display:flex;flex-wrap:nowrap;gap:8px;padding:12px;border-top:1px solid var(--line);background:#fff;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:thin;}
+  .chips::-webkit-scrollbar{height:6px;}
+  .chips::-webkit-scrollbar-thumb{background:#d6dbe8;border-radius:999px;}
+  .chip{
+    flex:none;white-space:nowrap;
+    font-family:'Nunito',sans-serif;font-weight:700;font-size:.9rem;
+    border:2px solid var(--line);background:#fff;color:var(--ink);
+    border-radius:999px;padding:8px 13px;cursor:pointer;transition:border-color .15s ease,background .15s ease;
+  }
+  .chip:hover{border-color:var(--amber);background:#fdf3e0;}
+  .chip:focus-visible{outline:3px solid var(--amber);outline-offset:2px;}
+  .help-input{display:flex;gap:8px;padding:10px 12px;border-top:1px solid var(--line);background:#fff;}
+  .help-input input{
+    flex:1;border:2px solid var(--line);border-radius:999px;padding:10px 15px;
+    font-family:'Nunito',sans-serif;font-size:1rem;font-weight:600;color:var(--ink);outline:none;min-width:0;
+  }
+  .help-input input:focus{border-color:var(--amber);}
+  .help-input button{
+    flex:none;width:44px;height:44px;border-radius:50%;border:none;cursor:pointer;
+    background:linear-gradient(135deg,var(--amber),var(--amber-deep));color:#fff;
+    display:grid;place-items:center;transition:filter .15s ease,transform .12s ease;
+  }
+  .help-input button:hover{filter:brightness(1.06);transform:translateY(-1px);}
+  .help-input button:focus-visible{outline:3px solid var(--ink);outline-offset:2px;}
+  .help-input svg{width:20px;height:20px;}
+
+  /* ---- Sekundär-Button + Statistik ---- */
+  .btn.ghost{background:#fff;color:var(--ink);border:2px solid var(--line);box-shadow:none;}
+  .btn.ghost:hover{border-color:var(--amber);filter:none;}
+  .stats-overlay{position:fixed;inset:0;z-index:70;display:none;align-items:center;justify-content:center;padding:18px;background:rgba(22,28,50,.5);}
+  .stats-overlay.open{display:flex;animation:fade .2s ease;}
+  .stats-panel{width:min(420px,100%);max-height:88vh;overflow-y:auto;background:#fff;border-radius:22px;box-shadow:0 24px 60px -20px rgba(20,25,45,.6);animation:slideup .25s ease;}
+  .stats-head{background:linear-gradient(135deg,#222c52,#1a2342);color:#fff;padding:16px 18px;display:flex;align-items:center;gap:10px;}
+  .stats-head .av{width:36px;height:36px;border-radius:50%;background:#f4a828;display:grid;place-items:center;font-size:1.1rem;flex:none;}
+  .stats-head .ttl{font-family:'Fredoka',sans-serif;font-weight:600;font-size:1.1rem;}
+  .stats-head .x{margin-left:auto;background:rgba(255,255,255,.15);border:none;color:#fff;width:30px;height:30px;border-radius:50%;cursor:pointer;font-size:1rem;}
+  .stats-head .x:hover{background:rgba(255,255,255,.28);}
+  .stats-grid{padding:18px;display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+  .tile{background:#fbf7ee;border:1px solid #f0e3c6;border-radius:16px;padding:14px;text-align:center;}
+  .tile .big{font-family:'Fredoka',sans-serif;font-weight:700;font-size:1.7rem;color:var(--amber-deep);line-height:1.1;}
+  .tile .lbl{font-size:.82rem;font-weight:700;color:var(--ink-soft);margin-top:5px;}
+  .tile.wide{grid-column:1 / -1;}
+  .stats-foot{padding:0 18px 18px;display:flex;flex-direction:column;gap:10px;}
+  .reset{background:none;border:none;color:var(--ink-soft);font-family:'Nunito',sans-serif;font-weight:700;font-size:.85rem;cursor:pointer;text-decoration:underline;}
+  .reset:hover{color:var(--red);}
+  .ghost-row{display:flex;gap:10px;margin-top:10px;}
+  .ghost-row .btn{margin-top:0;flex:1;font-size:1rem;padding:13px 10px;}
+  .err-body{padding:18px;display:flex;flex-direction:column;gap:11px;}
+  .err-card{background:#fdece8;border:1px solid #f5c9bd;border-radius:14px;padding:12px 14px;}
+  .err-card .eq{font-weight:800;color:var(--ink);font-size:.95rem;line-height:1.3;margin-bottom:4px;}
+  .err-card .es{font-style:italic;color:var(--ink-soft);font-size:.9rem;margin-bottom:6px;}
+  .err-card .ea{font-weight:700;color:var(--green);font-size:.92rem;}
+  .err-empty{padding:34px 18px;text-align:center;color:var(--ink-soft);font-weight:700;font-size:1.05rem;line-height:1.5;}
+  @media (max-width:430px){
+    .help-overlay{padding:0;align-items:stretch;justify-content:stretch;}
+    .help-panel{width:100%;height:100%;border-radius:0;}
+  }
+</style>
+</head>
+<body>
+<a href="index.html" id="hubHomeBtn" onclick="return hubGoHome(event)" aria-label="Zurueck zur Startseite">🏠 Startseite</a>
+<style>
+#hubHomeBtn{position:fixed;top:12px;left:12px;z-index:2147483600;display:inline-flex;align-items:center;gap:6px;text-decoration:none;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",system-ui,sans-serif;font-weight:700;font-size:14px;line-height:1;color:#1b1c22;background:rgba(255,255,255,.92);border:1px solid rgba(0,0,0,.08);border-radius:999px;padding:9px 14px;box-shadow:0 4px 14px rgba(20,22,40,.18);-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);cursor:pointer;}
+#hubHomeBtn:hover{background:#fff;}
+#hubHomeBtn:active{transform:translateY(1px);}
+#hubHomeBtn:focus-visible{outline:3px solid #9db4ff;outline-offset:2px;}
+@media print{#hubHomeBtn{display:none!important;}}
+</style>
+<script>function hubGoHome(e){if(e&&e.preventDefault)e.preventDefault();var u=null;try{u=localStorage.getItem("hub-url");}catch(x){}window.location.href=u||"index.html";return false;}</script>
+
+<main class="case">
+  <div class="topbar">
+    <span class="glass" aria-hidden="true">
+      <svg viewBox="0 0 24 24" fill="none" stroke="#f4a828" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="10.5" cy="10.5" r="6.5"/><line x1="15.2" y1="15.2" x2="21" y2="21"/>
+      </svg>
+    </span>
+    <span class="brand">Satz-Detektiv<small>Auf der Jagd nach dem Prädikat</small></span>
+  </div>
+  <div class="body" id="screen"></div>
+</main>
+
+<!-- Hilfe-Detektiv -->
+<button class="help-fab" id="helpFab" aria-label="Hilfe öffnen">
+  <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+    <path d="M21 11.5a8.5 8.5 0 0 1-12.2 7.6L3 21l1.9-5.8A8.5 8.5 0 1 1 21 11.5z"/>
+    <line x1="8.5" y1="11.2" x2="8.51" y2="11.2"/><line x1="12" y1="11.2" x2="12.01" y2="11.2"/><line x1="15.5" y1="11.2" x2="15.51" y2="11.2"/>
+  </svg>
+  <span class="ping">?</span>
+</button>
+
+<div class="help-overlay" id="helpOverlay" role="dialog" aria-modal="true" aria-label="Hilfe-Detektiv">
+  <div class="help-panel">
+    <div class="help-head">
+      <span class="av" aria-hidden="true">🕵️</span>
+      <span class="ttl">Hilfe-Detektiv<small>Frag mich alles</small></span>
+      <button class="x" id="helpClose" aria-label="Schließen">✕</button>
+    </div>
+    <div class="help-chat" id="helpChat"></div>
+    <div class="chips" id="helpChips"></div>
+    <div class="help-input">
+      <input id="helpField" type="text" placeholder="Tippe deine Frage hier" autocomplete="off" />
+      <button id="helpSend" aria-label="Senden">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+      </button>
+    </div>
+  </div>
+</div>
+
+<div class="stats-overlay" id="statsOverlay" role="dialog" aria-modal="true" aria-label="Meine Statistik">
+  <div class="stats-panel">
+    <div class="stats-head">
+      <span class="av" aria-hidden="true">📊</span>
+      <span class="ttl">Meine Statistik</span>
+      <button class="x" id="statsClose" aria-label="Schließen">✕</button>
+    </div>
+    <div class="stats-grid" id="statsGrid"></div>
+    <div class="stats-foot">
+      <button class="btn ghost" id="statsCloseBtn">Schließen</button>
+      <button class="reset" id="statsReset">Statistik zurücksetzen</button>
+    </div>
+  </div>
+</div>
+
+<div class="stats-overlay" id="errOverlay" role="dialog" aria-modal="true" aria-label="Meine Fehler">
+  <div class="stats-panel">
+    <div class="stats-head">
+      <span class="av" aria-hidden="true">🔎</span>
+      <span class="ttl">Meine Fehler</span>
+      <button class="x" id="errClose" aria-label="Schließen">✕</button>
+    </div>
+    <div class="err-body" id="errBody"></div>
+    <div class="stats-foot">
+      <button class="btn" id="errPractice">Nur diese Fälle üben 🎯</button>
+      <button class="reset" id="errReset">Fehlerliste leeren</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const QUESTIONS = [
+  {
+    question:"Mit welcher Frage spürst du das Prädikat auf?",
+    options:["Was tut die Person?","Wann passiert es?","Wo passiert es?","Welche Farbe hat es?"],
+    answer:"Was tut die Person?",
+    explanation:"Genau! Mit Fragen wie „Was tut die Person?“ oder „Was geschieht?“ findest du das Prädikat."
+  },
+  {
+    question:"Was ist ein Prädikat immer?",
+    options:["Ein Verb (Tu-Wort) oder eine Form von „sein“","Ein Nomen (Namenwort)","Ein Adjektiv (Wie-Wort)","Ein Begleiter (der, die, das)"],
+    answer:"Ein Verb (Tu-Wort) oder eine Form von „sein“",
+    explanation:"Richtig! Das Prädikat ist immer ein Verb – oder eine Form von „sein“ (bin, bist, ist, sind …)."
+  },
+  {
+    question:"Wie viele Prädikate braucht ein Satz mindestens?",
+    options:["Eins – jeder Satz hat ein Prädikat","Gar keins","Immer genau zwei","Mindestens drei"],
+    answer:"Eins – jeder Satz hat ein Prädikat",
+    explanation:"Stimmt! Jeder Satz besitzt ein Prädikat – ohne geht ein Satz nicht."
+  },
+  {
+    question:"Wo steht das Prädikat in einem Aussagesatz meistens?",
+    options:["An der zweiten Stelle","Ganz am Anfang","Immer am Ende","Das ist egal"],
+    answer:"An der zweiten Stelle",
+    explanation:"Genau! Im Aussagesatz ist das Prädikat meistens das zweite Satzglied."
+  },
+  {
+    sentence:"Leonie liest am Nachmittag ein Buch.",
+    target:["liest"],
+    question:"Welches Wort ist das Prädikat?",
+    options:["Leonie","liest","Nachmittag","Buch"],
+    answer:"liest",
+    explanation:"Super! Was tut Leonie? Sie liest. Also ist „liest“ das Prädikat."
+  },
+  {
+    sentence:"Der Hund bellt laut.",
+    target:["bellt"],
+    question:"Wo versteckt sich das Prädikat?",
+    options:["Hund","bellt","laut","Der"],
+    answer:"bellt",
+    explanation:"Richtig! Was tut der Hund? Er bellt. Das Prädikat ist „bellt“."
+  },
+  {
+    sentence:"Wir spielen im Garten Fußball.",
+    target:["spielen"],
+    question:"Welches Wort ist das Prädikat?",
+    options:["Garten","Fußball","spielen","Wir"],
+    answer:"spielen",
+    explanation:"Genau! Was tun wir? Wir spielen. Das Prädikat ist „spielen“."
+  },
+  {
+    sentence:"Die Sonne scheint hell.",
+    target:["scheint"],
+    question:"Welches Wort ist das Prädikat?",
+    options:["Sonne","scheint","hell","Die"],
+    answer:"scheint",
+    explanation:"Klasse! Was tut die Sonne? Sie scheint. Das Prädikat ist „scheint“."
+  },
+  {
+    sentence:"Der Tag ist heute schön.",
+    target:["ist"],
+    question:"Welches Wort ist das Prädikat?",
+    options:["Tag","ist","heute","schön"],
+    answer:"ist",
+    explanation:"Stark! „ist“ ist eine Form von „sein“ – und darum das Prädikat."
+  },
+  {
+    sentence:"Paul macht das Fenster auf.",
+    target:["macht","auf"],
+    question:"Das Prädikat hat hier zwei Teile. Welche gehören zusammen?",
+    options:["macht + auf","nur macht","Fenster + auf","Paul + auf"],
+    answer:"macht + auf",
+    explanation:"Top, Detektiv! Bei „aufmachen“ wird das Verb getrennt: „macht“ und „auf“ gehören beide zum Prädikat."
+  },
+  {
+    sentence:"Der Lehrer liest die Geschichte vor.",
+    target:["liest","vor"],
+    question:"Welche zwei Wörter bilden zusammen das Prädikat?",
+    options:["liest + vor","nur liest","Geschichte","Lehrer + vor"],
+    answer:"liest + vor",
+    explanation:"Richtig erkannt! „vorlesen“ wird getrennt: „liest“ und „vor“ sind zusammen das Prädikat."
+  },
+  {
+    sentence:"Lisa malt ein buntes Bild.",
+    target:["malt"],
+    question:"Mit welcher Frage findest du hier das Prädikat?",
+    options:["Was tut Lisa?","Was malt Lisa?","Wer malt?","Wie ist das Bild?"],
+    answer:"Was tut Lisa?",
+    explanation:"Super! „Was tut Lisa?“ – Sie malt. So findest du das Prädikat „malt“."
+  },
+  {
+    sentence:"Die Kinder rennen über die Wiese.",
+    target:["rennen"],
+    question:"Welches Wort ist das Prädikat?",
+    options:["Kinder","rennen","Wiese","über"],
+    answer:"rennen",
+    explanation:"Richtig! Was tun die Kinder? Sie rennen. Das Prädikat ist „rennen“."
+  },
+  {
+    sentence:"Mein Bruder ist heute müde.",
+    target:["ist"],
+    question:"Welches Wort ist das Prädikat?",
+    options:["Bruder","ist","heute","müde"],
+    answer:"ist",
+    explanation:"Klasse! „ist“ ist eine Form von „sein“ und damit das Prädikat."
+  }
+];
+
+const PLAYER = "Paul";
+let order = [];
+let idx = 0;
+let score = 0;
+let practiceMode = false;
+
+const screen = document.getElementById('screen');
+
+function shuffle(a){a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
+function clean(w){return w.replace(/[.,!?;:„“"»«]/g,'').toLowerCase();}
+
+function start(){
+  practiceMode = false;
+  order = shuffle(QUESTIONS.map((_,i)=>i));
+  idx = 0; score = 0;
+  screen.innerHTML = `
+    <div class="center">
+      <div class="badgebig">🕵️</div>
+      <div class="hello">Hallo ${PLAYER}!</div>
+      <p class="lead">In jedem Satz versteckt sich ein <b>Prädikat</b>. Deine Aufgabe: Spür es auf! Frage einfach <b>„Was tut die Person?“</b> – und schau genau hin.</p>
+      <button class="btn" id="go">Ermittlung starten 🔍</button>
+      <div class="ghost-row">
+        <button class="btn ghost" id="statsOpenStart">📊 Statistik</button>
+        <button class="btn ghost" id="errOpenStart">🔎 Meine Fehler</button>
+      </div>
+    </div>`;
+  document.getElementById('go').onclick = start_round;
+  document.getElementById('statsOpenStart').onclick = openStats;
+  document.getElementById('errOpenStart').onclick = openErrors;
+}
+function start_round(){
+  practiceMode = false;
+  order = shuffle(QUESTIONS.map((_,i)=>i));
+  idx = 0; score = 0;
+  render();
+}
+
+function render(){
+  const qid = order[idx];
+  const q = QUESTIONS[qid];
+  const opts = shuffle(q.options);
+  const total = order.length;
+  const pct = Math.round((idx/total)*100);
+
+  let sentenceHTML = "";
+  if(q.sentence){
+    const targets = (q.target||[]).map(clean);
+    const words = q.sentence.split(' ').map(w=>{
+      const isT = targets.includes(clean(w));
+      return `<span class="word${isT?' target':''}">${w}</span>`;
+    }).join(' ');
+    sentenceHTML = `<div class="clueline" id="clue">${words}</div>`;
+  }
+
+  screen.innerHTML = `
+    <div class="meta">
+      <span class="fall">${practiceMode?'Übung':'Fall'} ${idx+1} / ${total}</span>
+      <span class="score">🔍 ${score} gelöst</span>
+    </div>
+    <div class="bar"><i style="width:${pct}%"></i></div>
+    ${sentenceHTML}
+    <h2 class="question">${q.question}</h2>
+    <div style="text-align:center;margin:-4px 0 12px"><button type="button" onclick="fxSpeak()" title="Vorlesen" style="background:#eef4ff;border:1px solid #d7e3ff;border-radius:999px;padding:6px 14px;font-size:14px;font-weight:600;color:#2b59c3;cursor:pointer">🗣️ Vorlesen</button></div>
+    <div class="options" id="opts">
+      ${opts.map(o=>`<button class="opt"><span class="pin"></span><span>${o}</span></button>`).join('')}
+    </div>
+    <div class="feedback" id="fb"></div>`;
+
+  const buttons = [...document.querySelectorAll('.opt')];
+  buttons.forEach(b=>{
+    b.onclick = ()=>choose(b, opts, q, buttons, qid);
+  });
+}
+
+function choose(btn, opts, q, buttons, qid){
+  const picked = btn.querySelector('span:last-child').textContent;
+  const correct = picked === q.answer;
+  if(correct){ score++; removeMistake(qid); fxConfetti(); }
+  else { addMistake(qid); }
+
+  buttons.forEach(b=>{
+    b.disabled = true;
+    const val = b.querySelector('span:last-child').textContent;
+    if(val === q.answer){ b.classList.add('correct'); b.querySelector('.pin').textContent='✓'; }
+    else if(b===btn){ b.classList.add('wrong'); b.querySelector('.pin').textContent='✕'; }
+    else { b.classList.add('dim'); }
+  });
+
+  const clue = document.getElementById('clue');
+  if(clue) clue.classList.add('found');
+
+  const last = idx+1 >= order.length;
+  const fb = document.getElementById('fb');
+  fb.innerHTML = `
+    <div class="fb-tag ${correct?'ok':'no'}">${correct?'🎉 Aufgeklärt!':'🤏 Knapp daneben'}</div>
+    <div class="fb-text">${q.explanation}</div>
+    <button class="btn" id="next">${last?'Ergebnis ansehen 🏅':'Nächster Fall ➜'}</button>`;
+  fb.classList.add('show');
+  document.getElementById('next').onclick = ()=>{
+    idx++;
+    if(idx<order.length) render(); else finish();
+  };
+  document.getElementById('next').focus();
+}
+
+function finish(){
+  const total = order.length;
+  const pct = score/total;
+  if(!practiceMode) recordGame(score, total);
+  let emoji, rank, msg;
+  if(pct>=0.9){ emoji="🏆"; rank="Meisterdetektiv"; msg="Wahnsinn! Dir entgeht kein Prädikat."; }
+  else if(pct>=0.7){ emoji="🕵️"; rank="Spürnase"; msg="Klasse ermittelt – fast alles aufgespürt!"; }
+  else if(pct>=0.5){ emoji="🔍"; rank="Detektiv-Lehrling"; msg="Schon gut! Mit etwas Übung wirst du zur Spürnase."; }
+  else { emoji="🧩"; rank="Nachwuchs-Detektiv"; msg="Guter Anfang! Übe die Frage „Was tut die Person?“ und versuch es nochmal."; }
+
+  screen.innerHTML = `
+    <div class="center">
+      <div class="badgebig">${emoji}</div>
+      <div class="rank">${rank}</div>
+      <div class="result">${score} von ${total} ${practiceMode?'Übungs-Fällen':'Fällen'} gelöst</div>
+      <p class="lead">${msg}</p>
+      <div class="tips">
+        <b>Merke dir, ${PLAYER}:</b>
+        <ul>
+          <li>Frage „Was tut die Person?“ – die Antwort ist das Prädikat.</li>
+          <li>Es ist immer ein Verb oder eine Form von „sein“.</li>
+          <li>Manchmal hat es zwei Teile (z. B. „macht“ und „auf“).</li>
+        </ul>
+      </div>
+      <button class="btn" id="again">Neue Ermittlung 🔁</button>
+      <div class="ghost-row">
+        <button class="btn ghost" id="statsOpenEnd">📊 Statistik</button>
+        <button class="btn ghost" id="errOpenEnd">🔎 Meine Fehler</button>
+      </div>
+    </div>`;
+  document.getElementById('again').onclick = start;
+  document.getElementById('statsOpenEnd').onclick = openStats;
+  document.getElementById('errOpenEnd').onclick = openErrors;
+}
+
+/* ---- Hilfe-Detektiv ---- */
+const EXAMPLES = [
+  "Hier ein Satz: „Die Katze schläft auf dem Sofa.“ Was tut die Katze? → Sie schläft. Prädikat: „schläft“. Jetzt du!",
+  "Versuch diesen: „Tom wirft den Ball.“ Was tut Tom? → Er wirft. Prädikat: „wirft“!",
+  "Probier mal: „Die Vögel singen am Morgen.“ Was tun die Vögel? → Sie singen. Prädikat: „singen“.",
+  "Hier: „Mama backt einen leckeren Kuchen.“ Was tut Mama? → Sie backt. Prädikat: „backt“.",
+  "Knifflig: „Lena räumt ihr Zimmer auf.“ Hier wird getrennt: „räumt … auf“ ist zusammen das Prädikat!",
+  "Diesen: „Der Schneemann ist groß.“ Welches Wort? → „ist“ (eine Form von „sein“).",
+  "Schau: „Wir fahren morgen ans Meer.“ Was tun wir? → Wir fahren. Prädikat: „fahren“."
+];
+const HELP = [
+  { q:"Was ist ein Prädikat? 🔍",
+    a:"Das Prädikat ist das Tu-Wort im Satz. Es sagt dir, WAS passiert – und jeder Satz hat eins!" },
+  { q:"Wie finde ich es? 🕵️",
+    a:"Frag einfach: „Was tut die Person?“ oder „Was geschieht?“ Die Antwort ist dein Prädikat. Beispiel: Der Hund bellt. → Was tut der Hund? Er bellt → „bellt“!" },
+  { q:"Was ist eine Form von „sein“? ✨",
+    a:"Manchmal ist das Prädikat kein Tu-Wort, sondern: bin, bist, ist, sind, war, waren. Beispiel: Der Tag ist schön. → Das Prädikat ist „ist“." },
+  { q:"Zwei Teile? (macht + auf) 🧩",
+    a:"Manche Verben werden getrennt! Bei „aufmachen“: Paul macht das Fenster auf. → „macht“ UND „auf“ gehören zusammen. Schau immer auch ans Satzende!" },
+  { q:"Wo steht das Prädikat? 📍",
+    a:"Im normalen Aussagesatz steht das Prädikat meistens an der zweiten Stelle – gleich nach dem ersten Satzteil." },
+  { q:"Was ist ein Verb? 🏃",
+    a:"Ein Verb ist ein Tu-Wort – es sagt, was jemand macht: laufen, spielen, lachen, essen. Das Prädikat ist fast immer ein Verb!" },
+  { q:"Was ist das Subjekt? 🙋",
+    a:"Das Subjekt ist die Person oder Sache, die etwas tut. Du findest es mit „Wer?“ oder „Was?“. Beispiel: Der Hund bellt. → Wer bellt? Der Hund." },
+  { q:"Gib mir ein Beispiel 📝",
+    pool:EXAMPLES }
+];
+function helpAnswer(e){ return (e.pool && e.pool.length) ? e.pool[Math.floor(Math.random()*e.pool.length)] : e.a; }
+
+const fab=document.getElementById('helpFab');
+const overlay=document.getElementById('helpOverlay');
+const helpChat=document.getElementById('helpChat');
+const helpChips=document.getElementById('helpChips');
+let helpGreeted=false;
+
+function helpAdd(text,who){
+  const d=document.createElement('div');
+  d.className='msg '+who;
+  d.textContent=text;
+  helpChat.appendChild(d);
+  helpChat.scrollTop=helpChat.scrollHeight;
+}
+function helpAsk(i){
+  helpAdd(HELP[i].q,'me');
+  const t=document.createElement('div');
+  t.className='msg bot typing';
+  t.innerHTML='<span></span><span></span><span></span>';
+  helpChat.appendChild(t); helpChat.scrollTop=helpChat.scrollHeight;
+  setTimeout(()=>{ t.remove(); helpAdd(helpAnswer(HELP[i]),'bot'); },450);
+}
+function openHelp(){
+  overlay.classList.add('open');
+  if(!helpGreeted){
+    helpAdd("Hallo Paul! Ich bin der Hilfe-Detektiv. Tippe unten auf eine Frage – ich helfe dir beim Prädikat! 🔍",'bot');
+    helpGreeted=true;
+  }
+}
+function closeHelp(){ overlay.classList.remove('open'); }
+
+HELP.forEach((h,i)=>{
+  const c=document.createElement('button');
+  c.className='chip'; c.textContent=h.q;
+  c.onclick=()=>helpAsk(i);
+  helpChips.appendChild(c);
+});
+const KB = [
+  { k:["was ist","was bedeutet","bedeutet","erklär","erklar","definition","was soll","was genau"],
+    a:"Das Prädikat ist das Tu-Wort im Satz. Es sagt dir, WAS passiert – und jeder Satz hat eins!" },
+  { k:["wie finde","finden","finde ich","erkenne","erkennen","wie weiß","wie weiss","was tut","welche frage","wie merke","aufspüren","aufspuren"],
+    a:"Frag einfach: „Was tut die Person?“ oder „Was geschieht?“ Die Antwort ist das Prädikat. Beispiel: Der Hund bellt. → Was tut der Hund? Er bellt → „bellt“!" },
+  { k:["sein","ist","bin","bist","sind","seid","war","waren","form von"],
+    a:"Manchmal ist das Prädikat kein Tu-Wort, sondern eine Form von „sein“: bin, bist, ist, sind, war, waren. Beispiel: Der Tag ist schön. → Das Prädikat ist „ist“." },
+  { k:["zwei teile","getrennt","trennen","trennbar","zwei wörter","zwei worter","aufmachen","vorlesen","macht auf","liest vor","mitkommen","einkaufen","aufräumen","aufraumen","satzende"],
+    a:"Manche Verben werden getrennt! Bei „aufmachen“: Paul macht das Fenster auf. → „macht“ UND „auf“ gehören zusammen. Schau immer auch ans Satzende!" },
+  { k:["wo steht","wo ist","stelle","position","zweite","anfang","ende","wo im satz","wievielte"],
+    a:"Im normalen Aussagesatz steht das Prädikat meistens an der zweiten Stelle – gleich nach dem ersten Satzteil." },
+  { k:["unterschied","subjekt und prädikat","subjekt prädikat","verschieden","was ist der unterschied"],
+    a:"Kurz erklärt: Das SUBJEKT ist, WER etwas tut (Frage: Wer?). Das PRÄDIKAT ist, WAS er tut (Frage: Was tut er?). Beispiel: Die Kinder spielen. → Subjekt „Kinder“, Prädikat „spielen“." },
+  { k:["subjekt","wer","wer macht","wer tut"],
+    a:"Das Subjekt ist die Person oder Sache, die etwas tut. Du findest es mit „Wer?“ oder „Was?“. Beispiel: Der Hund bellt. → Wer bellt? Der Hund. Das Subjekt ist „Hund“." },
+  { k:["verb","tu-wort","tuwort","tunwort","tu wort","tätigkeitswort","tatigkeitswort","zeitwort"],
+    a:"Ein Verb ist ein Tu-Wort – es sagt, was jemand macht: laufen, spielen, lachen, essen. Das Prädikat ist fast immer ein Verb!" },
+  { k:["nomen","namenwort","hauptwort","substantiv"],
+    a:"Ein Nomen ist ein Namenwort (Hund, Schule, Lisa). Das ist NICHT das Prädikat – das Prädikat ist das Tu-Wort." },
+  { k:["adjektiv","wie-wort","wiewort","wie wort","eigenschaftswort"],
+    a:"Ein Adjektiv ist ein Wie-Wort (schön, groß, schnell). Das ist meist NICHT das Prädikat. Aber: „Der Ball ist rund.“ → hier ist „ist“ das Prädikat." },
+  { k:["zwei prädikate","zwei pradikate","mehrere","zwei tu-wörter","zwei verben","mehr als ein","zwei tuwörter"],
+    a:"Manchmal hat ein Satz zwei Tu-Wörter! Beispiel: Paul liest und schreibt. → „liest“ und „schreibt“ sind beide Prädikate." },
+  { k:["fragesatz","frage","fragezeichen","liest du","kommst du","spielst du"],
+    a:"In einer Frage steht das Prädikat oft ganz vorne! Beispiel: Liest du ein Buch? → „liest“ ist das Prädikat." },
+  { k:["mehrteilig","hat gespielt","ist gegangen","gegangen","gespielt","perfekt","gelaufen"],
+    a:"Manchmal hat das Prädikat zwei Teile, die zusammengehören: „hat gespielt“, „ist gelaufen“. Beide Wörter zusammen sind das Prädikat." },
+  { k:["wie viele","wieviele","wie viel","anzahl","jeder satz","braucht jeder"],
+    a:"Jeder Satz hat mindestens EIN Prädikat – ohne geht ein Satz nicht. Manchmal sind es auch zwei (z. B. „singt und tanzt“)." },
+  { k:["beispiel","zeig","übung","ubung","üben","uben","aufgabe","noch eins","noch eine","noch ein","probieren","ein satz"],
+    pool:EXAMPLES },
+  { k:["hilfe","helfen","hilf mir","ich verstehe","verstehe nicht","kapier","schwer","schwierig","kann nicht","raff"],
+    a:"Kein Problem, das schaffst du! Merke: Frag „Was tut die Person?“ – die Antwort ist das Prädikat. Tippe gern auf eine Frage oben, dann gehen wir es zusammen durch. 🔍" },
+  { k:["danke","super","cool","toll","klasse","nice","perfekt danke"],
+    a:"Sehr gerne, Detektiv! 🕵️ Frag mich einfach weiter, wenn du Hilfe brauchst." },
+  { k:["hallo","hi","hey","na","servus","moin","hallöchen","hallochen"],
+    a:"Hallo Paul! Stell mir eine Frage zum Prädikat – oder tippe oben auf eine Frage. 🔍" },
+  { k:["tschüss","tschuss","bye","ciao","wiedersehen","ende","fertig"],
+    a:"Tschüss, Detektiv Paul! Komm wieder, wenn du Hilfe brauchst. 👋" },
+  { k:["wer bist du","wer bist","was bist du","bist du ein","wer sind sie"],
+    a:"Ich bin der Hilfe-Detektiv! 🕵️ Ich helfe dir, in jedem Satz das Prädikat aufzuspüren." }
+];
+function helpNorm(s){return s.toLowerCase().replace(/[.,!?;:„“"»«()]/g,' ').replace(/\s+/g,' ').trim();}
+function helpMatch(input){
+  const n=helpNorm(input);
+  const words=n.split(' ');
+  let best=null,bestScore=0;
+  for(const e of KB){
+    let score=0;
+    for(const k of e.k){
+      if(k.indexOf(' ')>-1){ if(n.indexOf(k)>-1) score++; }
+      else { if(words.indexOf(k)>-1) score++; }
+    }
+    if(score>bestScore){bestScore=score;best=e;}
+  }
+  return best;
+}
+function helpSend(){
+  const f=document.getElementById('helpField');
+  const text=f.value.trim();
+  if(!text) return;
+  f.value='';
+  openHelp();
+  helpAdd(text,'me');
+  const t=document.createElement('div');
+  t.className='msg bot typing';
+  t.innerHTML='<span></span><span></span><span></span>';
+  helpChat.appendChild(t); helpChat.scrollTop=helpChat.scrollHeight;
+  const hit=helpMatch(text);
+  setTimeout(()=>{
+    t.remove();
+    helpAdd(hit ? helpAnswer(hit) : "Hmm, das habe ich nicht ganz verstanden. Frag mich etwas zum Prädikat – zum Beispiel „Wie finde ich das Prädikat?“ – oder tippe oben auf eine Frage! 🔍",'bot');
+  },450);
+}
+
+fab.onclick=openHelp;
+document.getElementById('helpClose').onclick=closeHelp;
+document.getElementById('helpSend').onclick=helpSend;
+document.getElementById('helpField').addEventListener('keydown',(e)=>{ if(e.key==='Enter') helpSend(); });
+overlay.onclick=(e)=>{ if(e.target===overlay) closeHelp(); };
+document.addEventListener('keydown',(e)=>{ if(e.key==='Escape') closeHelp(); });
+
+/* ---- Statistik ---- */
+const STATS_KEY='praedikat-stats';
+const RANK_ORDER=['Nachwuchs-Detektiv','Detektiv-Lehrling','Spürnase','Meisterdetektiv'];
+function statsDefault(){ return {games:0,correctTotal:0,best:0,bestRank:'',lastDate:'',streak:0}; }
+function loadStats(){
+  try{ const r=localStorage.getItem(STATS_KEY); if(r) return Object.assign(statsDefault(), JSON.parse(r)); }catch(e){}
+  return statsDefault();
+}
+function saveStats(s){ try{ localStorage.setItem(STATS_KEY, JSON.stringify(s)); }catch(e){} }
+function rankFor(pct){
+  if(pct>=0.9) return 'Meisterdetektiv';
+  if(pct>=0.7) return 'Spürnase';
+  if(pct>=0.5) return 'Detektiv-Lehrling';
+  return 'Nachwuchs-Detektiv';
+}
+function dayStr(d){ return d.getFullYear()+'-'+(d.getMonth()+1)+'-'+d.getDate(); }
+function recordGame(score,total){
+  const s=loadStats();
+  s.games+=1;
+  s.correctTotal+=score;
+  if(score>s.best) s.best=score;
+  const r=rankFor(score/total);
+  if(RANK_ORDER.indexOf(r)>RANK_ORDER.indexOf(s.bestRank)) s.bestRank=r;
+  const today=dayStr(new Date());
+  if(s.lastDate!==today){
+    const y=new Date(); y.setDate(y.getDate()-1);
+    s.streak = (s.lastDate===dayStr(y)) ? (s.streak||0)+1 : 1;
+    s.lastDate=today;
+  }
+  if(!s.streak) s.streak=1;
+  saveStats(s);
+}
+function openStats(){
+  const s=loadStats();
+  const total=QUESTIONS.length;
+  const tiles=[
+    {big:s.games, lbl:'Ermittlungen'},
+    {big:s.best+' / '+total, lbl:'Bester Fall'},
+    {big:s.correctTotal, lbl:'Richtige gesamt'},
+    {big:'🔥 '+(s.streak||0), lbl:'Tage in Folge'},
+    {big:s.bestRank||'–', lbl:'Höchster Rang', wide:true}
+  ];
+  document.getElementById('statsGrid').innerHTML = tiles.map(t=>
+    `<div class="tile${t.wide?' wide':''}"><div class="big">${t.big}</div><div class="lbl">${t.lbl}</div></div>`
+  ).join('');
+  document.getElementById('statsOverlay').classList.add('open');
+}
+function closeStats(){ document.getElementById('statsOverlay').classList.remove('open'); }
+document.getElementById('statsClose').onclick=closeStats;
+document.getElementById('statsCloseBtn').onclick=closeStats;
+document.getElementById('statsReset').onclick=()=>{
+  if(confirm('Wirklich die ganze Statistik löschen?')){ saveStats(statsDefault()); openStats(); }
+};
+document.getElementById('statsOverlay').onclick=(e)=>{ if(e.target===document.getElementById('statsOverlay')) closeStats(); };
+document.addEventListener('keydown',(e)=>{ if(e.key==='Escape') closeStats(); });
+
+/* ---- Meine Fehler ---- */
+const MIST_KEY='praedikat-mistakes';
+function loadMist(){ try{ const r=localStorage.getItem(MIST_KEY); if(r) return JSON.parse(r); }catch(e){} return []; }
+function saveMist(a){ try{ localStorage.setItem(MIST_KEY, JSON.stringify(a)); }catch(e){} }
+function addMistake(id){ const a=loadMist(); if(a.indexOf(id)<0){ a.push(id); saveMist(a); } }
+function removeMistake(id){ const a=loadMist().filter(x=>x!==id); saveMist(a); }
+function openErrors(){
+  const ids=loadMist();
+  const body=document.getElementById('errBody');
+  const practice=document.getElementById('errPractice');
+  if(!ids.length){
+    body.innerHTML='<div class="err-empty">🎉 Keine Fehler gespeichert.<br>Stark, Detektiv '+PLAYER+'!</div>';
+    practice.style.display='none';
+  } else {
+    practice.style.display='';
+    body.innerHTML = ids.map(id=>{
+      const q=QUESTIONS[id]; if(!q) return '';
+      const s = q.sentence ? '<div class="es">„'+q.sentence+'“</div>' : '';
+      return '<div class="err-card"><div class="eq">'+q.question+'</div>'+s+'<div class="ea">✓ '+q.answer+'</div></div>';
+    }).join('');
+  }
+  document.getElementById('errOverlay').classList.add('open');
+}
+function closeErrors(){ document.getElementById('errOverlay').classList.remove('open'); }
+function practiceMistakes(){
+  const ids=loadMist();
+  if(!ids.length) return;
+  practiceMode=true;
+  order=shuffle(ids);
+  idx=0; score=0;
+  closeErrors();
+  render();
+}
+document.getElementById('errClose').onclick=closeErrors;
+document.getElementById('errPractice').onclick=practiceMistakes;
+document.getElementById('errReset').onclick=()=>{
+  if(confirm('Wirklich alle gespeicherten Fehler löschen?')){ saveMist([]); openErrors(); }
+};
+document.getElementById('errOverlay').onclick=(e)=>{ if(e.target===document.getElementById('errOverlay')) closeErrors(); };
+document.addEventListener('keydown',(e)=>{ if(e.key==='Escape') closeErrors(); });
+
+start();
+</script>
+<script>
+function fxSpeak(){
+  try{
+    var parts=[];
+    var clue=document.getElementById('clue'); if(clue) parts.push(clue.textContent.trim());
+    var q=document.querySelector('.question'); if(q) parts.push(q.textContent.trim());
+    var opts=Array.prototype.map.call(document.querySelectorAll('.opt'),function(b){return b.textContent.trim();});
+    var txt=parts.filter(Boolean).join('. ');
+    if(opts.length) txt += '. ' + opts.join(', ');
+    if(!txt) return;
+    var u=new SpeechSynthesisUtterance(txt); u.lang='de-DE'; u.rate=0.95;
+    speechSynthesis.cancel(); speechSynthesis.speak(u);
+  }catch(e){}
+}
+function fxConfetti(){
+  try{
+    if(window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    var c=document.getElementById('fxCanvas');
+    if(!c){ c=document.createElement('canvas'); c.id='fxCanvas';
+      c.style.cssText='position:fixed;inset:0;pointer-events:none;z-index:99998'; document.body.appendChild(c); }
+    var x=c.getContext('2d'); c.width=innerWidth; c.height=innerHeight;
+    var cols=['#3aa6ff','#16c784','#ffd23f','#ff7a59','#a06bff','#ff5fa2'], P=[];
+    for(var i=0;i<110;i++) P.push({x:Math.random()*c.width,y:-20-Math.random()*c.height*0.3,
+      r:5+Math.random()*6,vy:2+Math.random()*3.5,vx:-1.5+Math.random()*3,
+      rot:Math.random()*6.28,vr:-0.2+Math.random()*0.4,col:cols[i%cols.length]});
+    var fr=0;(function loop(){ x.clearRect(0,0,c.width,c.height); fr++;
+      P.forEach(function(p){ p.x+=p.vx; p.y+=p.vy; p.rot+=p.vr; p.vy+=0.05;
+        x.save(); x.translate(p.x,p.y); x.rotate(p.rot); x.fillStyle=p.col;
+        x.fillRect(-p.r/2,-p.r/2,p.r,p.r*0.6); x.restore(); });
+      if(fr<200) requestAnimationFrame(loop); else x.clearRect(0,0,c.width,c.height);
+    })();
+  }catch(e){}
+}
+</script>
+</body>
+</html>

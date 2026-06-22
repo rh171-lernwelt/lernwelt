@@ -1,0 +1,856 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pauls Lernwelt</title>
+<style>
+  :root{
+    --bg:#eef1f7;
+    --bg2:#e6eaf4;
+    --card:#ffffff;
+    --ink:#1b1c22;
+    --muted:#71768a;
+    --line:#e4e7f0;
+    --deutsch:#4f46e5;
+    --hsu:#f3960b;
+    --musik:#8b5cf6;
+    --spass:#ec4899;
+    --mathe:#10b981;
+    --englisch:#ef4444;
+    --flame1:#fb923c;
+    --flame2:#f43f5e;
+    --radius:22px;
+    --shadow:0 1px 2px rgba(20,22,40,.04), 0 10px 30px rgba(20,22,40,.07);
+    --font: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", system-ui, sans-serif;
+    --round: ui-rounded, "SF Pro Rounded", -apple-system, system-ui, sans-serif;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    font-family:var(--font);
+    color:var(--ink);
+    background:
+      radial-gradient(1200px 600px at 80% -10%, #f6f1ff 0%, rgba(246,241,255,0) 55%),
+      radial-gradient(1000px 500px at -10% 0%, #eaf4ff 0%, rgba(234,244,255,0) 50%),
+      linear-gradient(180deg, var(--bg) 0%, var(--bg2) 100%);
+    background-attachment:fixed;
+    min-height:100vh;
+    -webkit-font-smoothing:antialiased;
+  }
+  /* sanfte, performante Hintergrund-Blobs */
+  .bgfx{position:fixed;inset:0;z-index:-1;overflow:hidden;pointer-events:none;}
+  .bgfx span{position:absolute;border-radius:50%;filter:blur(64px);opacity:.45;will-change:transform;}
+  .bgfx span:nth-child(1){width:440px;height:440px;left:-90px;top:-120px;background:#cfe0ff;animation:drift1 44s ease-in-out infinite;}
+  .bgfx span:nth-child(2){width:380px;height:380px;right:-100px;top:-70px;background:#e9dbff;animation:drift2 52s ease-in-out infinite;}
+  .bgfx span:nth-child(3){width:320px;height:320px;left:42%;bottom:-150px;background:#d6f3e6;animation:drift3 60s ease-in-out infinite;}
+  @keyframes drift1{50%{transform:translate(70px,46px) scale(1.08);}}
+  @keyframes drift2{50%{transform:translate(-56px,54px) scale(1.05);}}
+  @keyframes drift3{50%{transform:translate(46px,-46px) scale(1.1);}}
+  .wrap{max-width:1040px;margin:0 auto;padding:22px 20px 60px;}
+
+  /* ---------- Topbar ---------- */
+  .topbar{
+    display:flex;align-items:center;justify-content:space-between;
+    gap:16px;flex-wrap:wrap;margin-bottom:18px;
+  }
+  .brand{display:flex;align-items:center;gap:14px;}
+  .globe{
+    width:54px;height:54px;border-radius:18px;flex:none;overflow:hidden;
+    display:grid;place-items:center;background:#5c65ae;
+    box-shadow:0 8px 22px rgba(92,108,255,.35);
+  }
+  .globe img{width:100%;height:100%;display:block;object-fit:cover;transform:scale(1.06);}
+  .brand h1{font-family:var(--round);font-weight:800;font-size:26px;margin:0;letter-spacing:-.02em;}
+  .brand p{margin:2px 0 0;color:var(--muted);font-size:14px;}
+  .controls{display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
+  .klasse{
+    display:flex;align-items:center;gap:8px;background:var(--card);
+    border:1px solid var(--line);border-radius:14px;padding:8px 12px;
+    font-size:14px;color:var(--muted);box-shadow:var(--shadow);
+  }
+  .klasse select{
+    font-family:var(--round);font-weight:700;font-size:15px;color:var(--ink);
+    border:none;background:transparent;outline:none;cursor:pointer;
+  }
+  .iconbtn{
+    border:1px solid var(--line);background:var(--card);border-radius:14px;
+    padding:9px 14px;font-size:14px;font-weight:600;color:var(--ink);
+    cursor:pointer;box-shadow:var(--shadow);font-family:var(--font);
+    transition:transform .12s ease, box-shadow .12s ease;
+  }
+  .iconbtn:hover{transform:translateY(-1px);}
+  .iconbtn:active{transform:translateY(0);}
+  .iconbtn:focus-visible{outline:3px solid #9db4ff;outline-offset:2px;}
+
+  /* ---------- Status strip ---------- */
+  .status{
+    display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin:6px 0 26px;
+  }
+  .stat{
+    background:var(--card);border:1px solid var(--line);border-radius:18px;
+    padding:14px 16px;box-shadow:var(--shadow);display:flex;align-items:center;gap:12px;
+  }
+  .stat .big{font-family:var(--round);font-weight:800;font-size:22px;line-height:1;letter-spacing:-.02em;}
+  .stat .lbl{color:var(--muted);font-size:12.5px;margin-top:3px;}
+  .stat .emj{font-size:26px;line-height:1;}
+  .flamewrap .emj{filter:drop-shadow(0 3px 6px rgba(244,63,94,.35));}
+
+  /* ---------- Fach sections ---------- */
+  .fach{margin-bottom:30px;}
+  .fachhead{display:flex;align-items:center;gap:10px;margin:0 2px 13px;}
+  .dot{width:13px;height:13px;border-radius:50%;flex:none;background:var(--c);}
+  .fachhead h2{font-family:var(--round);font-weight:800;font-size:19px;margin:0;letter-spacing:-.01em;}
+  .fachhead .count{color:var(--muted);font-size:13px;font-weight:600;}
+
+  .cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(232px,1fr));gap:14px;}
+
+  .card{
+    position:relative;display:flex;gap:13px;align-items:flex-start;
+    background:var(--card);border:1px solid var(--line);border-radius:var(--radius);
+    padding:16px;text-decoration:none;color:inherit;box-shadow:var(--shadow);
+    overflow:hidden;transition:transform .14s ease, box-shadow .14s ease, border-color .14s ease;
+  }
+  .card::before{
+    content:"";position:absolute;left:0;top:0;bottom:0;width:5px;background:var(--c);
+  }
+  .card:hover{transform:translateY(-3px);box-shadow:0 14px 34px rgba(20,22,40,.13);border-color:#d7dcec;}
+  .card:focus-visible{outline:3px solid var(--c);outline-offset:2px;}
+  .card .ic{
+    width:48px;height:48px;border-radius:14px;flex:none;display:grid;place-items:center;
+    font-size:27px;background:color-mix(in srgb, var(--c) 14%, white);
+  }
+  .card .body{min-width:0;flex:1;}
+  .card .t{font-family:var(--round);font-weight:800;font-size:16px;letter-spacing:-.01em;line-height:1.2;}
+  .card .s{color:var(--muted);font-size:13px;margin-top:3px;line-height:1.3;}
+  .card .meta{display:flex;align-items:center;gap:7px;margin-top:11px;flex-wrap:wrap;}
+  .tag{
+    font-size:11px;font-weight:700;letter-spacing:.01em;padding:3px 9px;border-radius:999px;
+    background:color-mix(in srgb, var(--c) 13%, white);color:color-mix(in srgb, var(--c) 70%, #222);
+  }
+  .pstat{font-size:12px;color:var(--muted);font-weight:600;}
+  .pstat.fresh{color:color-mix(in srgb, var(--c) 75%, #333);}
+  .card .neu{position:absolute;top:10px;right:10px;background:var(--c);color:#fff;
+    font-family:var(--round);font-weight:800;font-size:10.5px;letter-spacing:.04em;
+    padding:3px 9px;border-radius:999px;box-shadow:0 3px 9px color-mix(in srgb, var(--c) 45%, transparent);}
+
+  /* ---------- Empty / invite ---------- */
+  .invite .fachhead h2{color:var(--muted);}
+  .invitecard{
+    border:1.6px dashed #cdd3e6;background:rgba(255,255,255,.5);box-shadow:none;
+    display:flex;gap:13px;align-items:center;border-radius:var(--radius);padding:16px;
+  }
+  .invitecard .ic{width:48px;height:48px;border-radius:14px;flex:none;display:grid;place-items:center;
+    font-size:26px;background:color-mix(in srgb, var(--c) 12%, white);}
+  .invitecard .t{font-family:var(--round);font-weight:800;font-size:15.5px;}
+  .invitecard .s{color:var(--muted);font-size:12.5px;margin-top:2px;}
+
+  /* ---------- Klasse 4 placeholder ---------- */
+  .soon{
+    text-align:center;background:var(--card);border:1px solid var(--line);border-radius:24px;
+    padding:46px 24px;box-shadow:var(--shadow);
+  }
+  .soon .e{font-size:46px;}
+  .soon h3{font-family:var(--round);font-weight:800;font-size:21px;margin:10px 0 6px;}
+  .soon p{color:var(--muted);margin:0;font-size:14.5px;}
+
+  .foot{text-align:center;color:var(--muted);font-size:12px;margin-top:34px;line-height:1.6;}
+
+  /* ---------- Modal ---------- */
+  .overlay{
+    position:fixed;inset:0;background:rgba(20,22,40,.42);backdrop-filter:blur(3px);
+    display:none;place-items:center;padding:20px;z-index:50;
+  }
+  .overlay.on{display:grid;}
+  .modal{
+    background:var(--card);border-radius:26px;max-width:430px;width:100%;padding:26px 24px;
+    box-shadow:0 30px 70px rgba(20,22,40,.3);animation:pop .22s ease;
+  }
+  @keyframes pop{from{transform:scale(.94);opacity:0;}to{transform:scale(1);opacity:1;}}
+  .modal h3{font-family:var(--round);font-weight:800;font-size:20px;margin:0 0 4px;}
+  .modal p.lead{color:var(--muted);margin:0 0 16px;font-size:14px;}
+  .step{display:flex;gap:13px;align-items:flex-start;margin-bottom:13px;}
+  .step .n{width:28px;height:28px;border-radius:50%;flex:none;display:grid;place-items:center;
+    font-family:var(--round);font-weight:800;font-size:14px;color:#fff;
+    background:linear-gradient(150deg,#5b8cff,#7c5cff);}
+  .step .txt{font-size:14px;line-height:1.4;}
+  .step .txt b{font-weight:700;}
+  .modal .close{margin-top:8px;width:100%;border:none;border-radius:15px;padding:13px;
+    font-family:var(--round);font-weight:800;font-size:15px;color:#fff;cursor:pointer;
+    background:linear-gradient(150deg,#5b8cff,#7c5cff);}
+
+  canvas#confetti{position:fixed;inset:0;pointer-events:none;z-index:60;}
+
+  /* ---------- Suchleiste ---------- */
+  .searchbar{display:flex;align-items:center;gap:9px;background:var(--card);border:1px solid var(--line);
+    border-radius:16px;padding:11px 15px;box-shadow:var(--shadow);margin:0 0 18px;}
+  .searchbar svg{flex:none;}
+  .searchbar input{border:none;outline:none;background:transparent;font-family:var(--font);
+    font-size:15px;color:var(--ink);width:100%;}
+  .searchbar input::placeholder{color:var(--muted);}
+  .nores{text-align:center;color:var(--muted);font-size:14px;padding:26px;}
+
+  /* ---------- Wochenziel-Tile ---------- */
+  .dots{display:flex;gap:5px;margin-top:6px;}
+  .dots i{width:12px;height:12px;border-radius:50%;background:var(--line);display:block;}
+  .dots i.on{background:linear-gradient(150deg,var(--flame1),var(--flame2));}
+
+  /* ---------- Abzeichen-Wand ---------- */
+  .badges{display:grid;grid-template-columns:repeat(auto-fill,minmax(96px,1fr));gap:12px;margin-top:6px;}
+  .badge{text-align:center;padding:13px 8px;border-radius:18px;border:1px solid var(--line);background:#fafbff;}
+  .badge .be{font-size:32px;line-height:1;filter:grayscale(1);opacity:.32;}
+  .badge.earned{background:linear-gradient(165deg,#fff,#f3f6ff);border-color:#dbe3ff;box-shadow:0 6px 16px rgba(92,108,255,.12);}
+  .badge.earned .be{filter:none;opacity:1;}
+  .badge .bn{font-family:var(--round);font-weight:800;font-size:11.5px;margin-top:7px;line-height:1.2;}
+  .badge.earned .bn{color:var(--ink);}
+  .badge .bn{color:var(--muted);}
+  .badgecount{color:var(--muted);font-size:13px;margin:0 0 14px;}
+
+  /* ---------- Lernbericht ---------- */
+  .repsub{margin-bottom:16px;}
+  .repsub h4{font-family:var(--round);font-weight:800;font-size:14px;margin:0 0 7px;display:flex;align-items:center;gap:7px;}
+  .repsub h4 .rd{width:10px;height:10px;border-radius:50%;}
+  .reprow{display:flex;justify-content:space-between;align-items:baseline;gap:10px;
+    padding:7px 0;border-bottom:1px solid var(--line);font-size:13.5px;}
+  .reprow:last-child{border-bottom:none;}
+  .reprow .rn{color:var(--ink);font-weight:600;}
+  .reprow .rv{color:var(--muted);font-size:12.5px;text-align:right;white-space:nowrap;}
+  .reprow .rv b{color:var(--ink);font-weight:800;}
+  .reprow .warn{color:#e8453c;font-weight:700;}
+  .rephint{background:#fff7ed;border:1px solid #fed7aa;border-radius:14px;padding:13px 14px;
+    font-size:13px;color:#9a5b1e;line-height:1.45;}
+  .modal.wide{max-width:480px;max-height:82vh;overflow:auto;}
+
+  /* ---------- Neues-Spiel-Karte ---------- */
+  .createcard{
+    display:flex;align-items:center;gap:16px;width:100%;text-align:left;cursor:pointer;
+    border:none;border-radius:22px;padding:18px 20px;margin:0 0 22px;
+    color:#fff;font-family:var(--round);
+    background:linear-gradient(125deg,#7c5cff 0%,#5b8cff 50%,#22c1c3 100%);
+    box-shadow:0 10px 28px rgba(92,108,255,.35);
+    transition:transform .14s ease, box-shadow .14s ease;
+  }
+  .createcard:hover{transform:translateY(-2px);box-shadow:0 16px 38px rgba(92,108,255,.42);}
+  .createcard:active{transform:translateY(0);}
+  .createcard:focus-visible{outline:3px solid #fff;outline-offset:3px;}
+  .createcard .cc-ic{font-size:34px;line-height:1;flex:none;
+    width:56px;height:56px;border-radius:16px;display:grid;place-items:center;
+    background:rgba(255,255,255,.18);}
+  .createcard .cc-t{font-weight:800;font-size:18px;letter-spacing:-.01em;}
+  .createcard .cc-s{font-family:var(--font);font-weight:500;font-size:13.5px;opacity:.92;margin-top:2px;}
+  .createcard .cc-arrow{margin-left:auto;font-size:24px;opacity:.9;flex:none;}
+  .inspo{background:#f3f0ff;border:1px solid #e3dcff;border-radius:13px;padding:12px 14px;
+    font-size:14px;color:#5b3ec8;margin:6px 0 4px;line-height:1.45;}
+
+  @media(max-width:560px){
+    .status{grid-template-columns:1fr;}
+    .brand h1{font-size:23px;}
+    .controls{width:100%;}
+    .createcard .cc-arrow{display:none;}
+  }
+  @media (prefers-reduced-motion: reduce){
+    *{animation:none!important;transition:none!important;}
+  }
+</style>
+</head>
+<body>
+<div class="bgfx" aria-hidden="true"><span></span><span></span><span></span></div>
+<div class="wrap">
+
+  <header class="topbar">
+    <div class="brand">
+      <div class="globe"><img src="data:image/webp;base64,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" alt="Paul"></div>
+      <div>
+        <h1>Pauls Lernwelt</h1>
+        <p id="hello">Hallo Paul! Schön, dass du da bist.</p>
+      </div>
+    </div>
+    <div class="controls">
+      <label class="klasse">Klasse
+        <select id="klasse">
+          <option value="3">3</option>
+          <option value="4">4</option>
+        </select>
+      </label>
+      <button class="iconbtn" id="soundBtn" title="Ton an/aus" aria-pressed="true">🔊 Ton</button>
+      <button class="iconbtn" id="speak" title="Vorlesen">🗣️ Vorlesen</button>
+      <button class="iconbtn" id="badges">🏅 Abzeichen</button>
+      <button class="iconbtn" id="report">📊 Bericht</button>
+      <button class="iconbtn" id="how">➕ Neues Blatt</button>
+    </div>
+  </header>
+
+  <div class="searchbar">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#71768a" stroke-width="2.4" stroke-linecap="round"><circle cx="11" cy="11" r="7"></circle><line x1="21" y1="21" x2="16.5" y2="16.5"></line></svg>
+    <input id="search" type="text" placeholder="Spiel suchen … (z. B. Strom, Beethoven, Springer)" autocomplete="off" aria-label="Spiel suchen">
+  </div>
+
+  <button class="createcard" id="createBtn">
+    <div class="cc-ic">🎮</div>
+    <div>
+      <div class="cc-t">Neues Spiel erfinden</div>
+      <div class="cc-s">Bau dir dein eigenes Lernspiel – ganz nach deiner Idee!</div>
+    </div>
+    <div class="cc-arrow">›</div>
+  </button>
+
+  <section class="status">
+    <div class="stat flamewrap">
+      <div class="emj" id="flameEmj">🔥</div>
+      <div><div class="big" id="flameDays">–</div><div class="lbl">Lern-Flamme</div></div>
+    </div>
+    <div class="stat">
+      <div class="emj">🏅</div>
+      <div><div class="big" id="founderTxt">Gründer</div><div class="lbl" id="founderLbl">deiner Lernwelt</div></div>
+    </div>
+    <div class="stat">
+      <div class="emj">🧭</div>
+      <div><div class="big" id="discTxt">0 / 0</div><div class="lbl">Spiele entdeckt</div></div>
+    </div>
+    <div class="stat">
+      <div class="emj">🎯</div>
+      <div><div class="big" id="weekTxt">0 / 3</div><div class="lbl">Wochenziel</div>
+        <div class="dots" id="weekDots"><i></i><i></i><i></i></div></div>
+    </div>
+  </section>
+
+  <main id="grid"></main>
+
+  <div class="soon" id="soon" style="display:none">
+    <div class="e">🌞</div>
+    <h3>Klasse 4 kommt bald!</h3>
+    <p>Nach den Sommerferien füllt sich hier deine neue Klasse.<br>Stell oben einfach wieder auf <b>Klasse 3</b>, um weiterzuspielen.</p>
+  </div>
+
+  <p class="foot">
+    Deine Lernwelt wächst mit jedem Arbeitsblatt. 🌱<br>
+    Tipp: Damit alles sicher gespeichert wird, öffne den Ordner am besten mit dem kleinen Server-Trick (frag Papa).
+  </p>
+</div>
+
+<!-- Modal: neues Blatt -->
+<div class="overlay" id="overlay">
+  <div class="modal">
+    <h3>Neues Arbeitsblatt? 📸</h3>
+    <p class="lead">So machst du aus deinem Blatt ein Spiel:</p>
+    <div class="step"><div class="n">1</div><div class="txt">Mach ein <b>Foto</b> vom Arbeitsblatt.</div></div>
+    <div class="step"><div class="n">2</div><div class="txt">Öffne deinen <b>Lern-Chat</b> und lade das Foto hoch.</div></div>
+    <div class="step"><div class="n">3</div><div class="txt">Wähle das <b>Fach</b> (Deutsch, HSU, Musik, Mathe oder Englisch).</div></div>
+    <div class="step"><div class="n">4</div><div class="txt">Sag, ob du <b>lernen</b> oder <b>spielen</b> willst – und schon bauen wir dein Spiel!</div></div>
+    <button class="close" id="closeModal">Alles klar!</button>
+  </div>
+</div>
+
+<!-- Modal: Abzeichen-Wand -->
+<div class="overlay" id="badgeOverlay">
+  <div class="modal wide">
+    <h3>🏅 Deine Abzeichen</h3>
+    <p class="badgecount" id="badgeCount"></p>
+    <div class="badges" id="badgeGrid"></div>
+    <button class="close" id="closeBadges">Weiter spielen!</button>
+  </div>
+</div>
+
+<!-- Modal: Lernbericht -->
+<div class="overlay" id="reportOverlay">
+  <div class="modal wide">
+    <h3>📊 Lernbericht</h3>
+    <p class="lead">So läuft es bei Paul gerade:</p>
+    <div id="reportBody"></div>
+    <button class="close" id="closeReport">Schließen</button>
+  </div>
+</div>
+
+<!-- Modal: Neues Spiel erfinden -->
+<div class="overlay" id="createOverlay">
+  <div class="modal">
+    <h3>🎮 Lust auf ein eigenes Spiel?</h3>
+    <p class="lead">So erfindest du dein eigenes Lernspiel:</p>
+    <div class="step"><div class="n">1</div><div class="txt">Öffne deinen <b>Lern-Chat</b>.</div></div>
+    <div class="step"><div class="n">2</div><div class="txt">Sag einfach: <b>„Ich will ein neues Spiel!"</b></div></div>
+    <div class="step"><div class="n">3</div><div class="txt">Du bekommst <b>3 coole Spiel-Ideen</b> zum Antippen – oder du <b>tippst deine eigene Idee</b>.</div></div>
+    <div class="step"><div class="n">4</div><div class="txt">Wir bauen es zusammen – und es landet hier mit <b>NEU</b>-Abzeichen!</div></div>
+    <div class="inspo" id="inspo"></div>
+    <button class="close" id="closeCreate">Los geht's!</button>
+  </div>
+</div>
+
+<canvas id="confetti"></canvas>
+
+<script>
+(function(){
+  "use strict";
+
+  // ---- Tool-Katalog ----------------------------------------------------
+  const TOOLS = [
+    {file:"klasse3-deutsch-praedikat-quiz.html", klasse:3, fach:"deutsch",
+      title:"Satz-Detektiv", sub:"Das Prädikat aufspüren", icon:"🕵️", type:"Quiz"},
+    {file:"klasse3-deutsch-subjekt-praedikat-quiz.html", klasse:3, fach:"deutsch",
+      title:"Satz-Detektiv: Subjekt & Prädikat", sub:"Beide Satzglieder jagen", icon:"🔎", type:"Quiz",
+      scoreKey:"sp_xp", scoreLabel:"XP"},
+    {file:"klasse3-deutsch-praedikat-profi-quiz.html", klasse:3, fach:"deutsch",
+      title:"Prädikat-Profi", sub:"Das harte Training", icon:"🎓", type:"Quiz",
+      scoreKey:"praedikatprofi-xp", scoreLabel:"XP"},
+    {file:"klasse3-deutsch-praedikat-springer.html", klasse:3, fach:"deutsch",
+      title:"Prädikat-Springer", sub:"Hüpf zu den Verben", icon:"🦘", type:"Spiel",
+      scoreKey:"praedikatSpringerRekord", scoreLabel:"Rekord"},
+    {file:"klasse3-deutsch-praedikat-springer-3d.html", klasse:3, fach:"deutsch",
+      title:"Prädikat-Springer 3D", sub:"In 3D durch die Sätze", icon:"🎮", type:"3D-Spiel",
+      scoreKey:"praedikat3dRekord", scoreLabel:"Rekord"},
+    {file:"klasse3-deutsch-praedikat-supermarkt.html", klasse:3, fach:"deutsch",
+      title:"Wörter-Supermarkt", sub:"Schnapp die richtigen Wörter", icon:"🛒", type:"Spiel",
+      scoreKey:"supermarkt-xp", scoreLabel:"XP"},
+    {file:"klasse3-deutsch-zeitangabe-sortierspiel.html", klasse:3, fach:"deutsch",
+      title:"Zeit-Baumeister", sub:"Sortier die Zeitangaben in die richtige Truhe", icon:"🧱", type:"Spiel",
+      scoreKey:"zeitangabe-xp", scoreLabel:"XP", added:"2026-06-22"},
+
+    {file:"klasse3-hsu-strom-quiz.html", klasse:3, fach:"hsu",
+      title:"Strom-Quiz", sub:"Wie funktioniert Strom?", icon:"⚡", type:"Quiz",
+      scoreKey:"strom_xp", scoreLabel:"XP"},
+    {file:"klasse3-hsu-strom-jumpnrun.html", klasse:3, fach:"hsu",
+      title:"Strom-Springer", sub:"Spring durch den Stromkreis", icon:"🔌", type:"Spiel",
+      scoreKey:"strom-xp", scoreLabel:"XP"},
+
+    {file:"klasse3-musik-beethoven-quiz.html", klasse:3, fach:"musik",
+      title:"Beethoven-Quiz", sub:"Entdecke den großen Komponisten", icon:"🎼", type:"Quiz",
+      scoreKey:"beethoven-games", scoreLabel:"Spiele"},
+
+    {file:"klasse3-spass-wuerfel-spiel.html", klasse:3, fach:"spass",
+      title:"Pauls Würfel", sub:"Einfach mal würfeln", icon:"🎲", type:"Spaß"}
+  ];
+
+  const FACH = {
+    deutsch:{name:"Deutsch", color:"var(--deutsch)"},
+    hsu:    {name:"HSU", color:"var(--hsu)"},
+    musik:  {name:"Musik", color:"var(--musik)"},
+    spass:  {name:"Spaß", color:"var(--spass)"}
+  };
+  const FACH_ORDER = ["deutsch","hsu","musik","spass"];
+  const INVITES = [
+    {fach:"mathe", name:"Mathe", color:"var(--mathe)", icon:"➕", text:"Lade ein Mathe-Blatt hoch – hier entsteht dein erstes Spiel."},
+    {fach:"englisch", name:"Englisch", color:"var(--englisch)", icon:"🇬🇧", text:"Noch leer! Dein erstes English-Game wartet auf dich."}
+  ];
+
+  // ---- Speicher (hub-eigene Daten) ------------------------------------
+  const today = new Date(); today.setHours(0,0,0,0);
+  const iso = d => d.toISOString().slice(0,10);
+  const get = (k,def) => { try{const v=localStorage.getItem(k);return v==null?def:v;}catch(e){return def;} };
+  const set = (k,v) => { try{localStorage.setItem(k,v);}catch(e){} };
+
+  // Damit die Spiele zurück zur Startseite finden:
+  set("hub-url","index.html");
+
+  // Gründer-Datum
+  let founded = get("hub-founded", null);
+  let isNewWorld = false;
+  if(!founded){ founded = iso(today); set("hub-founded", founded); isNewWorld = true; }
+
+  // Lern-Flamme (Streak)
+  let streak = parseInt(get("hub-streak","0"),10) || 0;
+  const last = get("hub-last", null);
+  if(last !== iso(today)){
+    const y = new Date(today); y.setDate(y.getDate()-1);
+    if(last === iso(y)) streak += 1;          // gestern war da -> Flamme wächst
+    else streak = 1;                           // neu oder Lücke -> frisch starten
+    set("hub-streak", String(streak));
+    set("hub-last", iso(today));
+  }
+  streak = parseInt(get("hub-streak","1"),10) || 1;
+
+  // Bestleistung der Flamme merken (für Abzeichen)
+  let bestStreak = parseInt(get("hub-beststreak","0"),10) || 0;
+  if(streak > bestStreak){ bestStreak = streak; set("hub-beststreak", String(bestStreak)); }
+
+  // gespielte Aktivitäten gesamt (für Abzeichen)
+  let plays = parseInt(get("hub-plays","0"),10) || 0;
+
+  // Wochenziel: an wie vielen Tagen diese Woche aktiv?
+  function weekId(d){
+    const t=new Date(d); t.setHours(0,0,0,0);
+    t.setDate(t.getDate()+3-((t.getDay()+6)%7));      // Donnerstag dieser ISO-Woche
+    const week1=new Date(t.getFullYear(),0,4);
+    return t.getFullYear()+"-W"+(1+Math.round(((t-week1)/86400000-3+((week1.getDay()+6)%7))/7));
+  }
+  const curWeek = weekId(today);
+  let weekDays = [];
+  try{ const wd=JSON.parse(get("hub-weekdays","{}")); if(wd && wd.week===curWeek) weekDays = wd.days||[]; }catch(e){}
+  if(weekDays.indexOf(iso(today))<0){ weekDays.push(iso(today)); set("hub-weekdays", JSON.stringify({week:curWeek,days:weekDays})); }
+  const WEEK_GOAL = 3;
+  const weekDone = Math.min(weekDays.length, WEEK_GOAL);
+  if(weekDays.length>=WEEK_GOAL) set("hub-weekly-done", curWeek);
+
+  function paintWeek(){
+    document.getElementById("weekTxt").textContent = weekDone + " / " + WEEK_GOAL;
+    const dots=document.getElementById("weekDots").children;
+    for(let i=0;i<dots.length;i++) dots[i].className = i<weekDone ? "on" : "";
+  }
+  paintWeek();
+
+  // entdeckte Spiele
+  let opened = [];
+  try{ opened = JSON.parse(get("hub-opened","[]")) || []; }catch(e){ opened = []; }
+
+  // ---- Status anzeigen -------------------------------------------------
+  document.getElementById("flameDays").textContent = streak + (streak===1?" Tag":" Tage");
+  const founderDate = new Date(founded);
+  document.getElementById("founderTxt").textContent = "Gründer";
+  document.getElementById("founderLbl").textContent =
+    "seit " + founderDate.toLocaleDateString("de-DE",{day:"numeric",month:"long"});
+
+  function refreshDiscovered(){
+    const all = TOOLS.map(t=>t.file);
+    const n = opened.filter(f=>all.includes(f)).length;
+    document.getElementById("discTxt").textContent = n + " / " + all.length;
+  }
+
+  // ---- relative Datums-Hilfe ------------------------------------------
+  function ago(isoStr){
+    if(!isoStr) return null;
+    const d = new Date(isoStr); d.setHours(0,0,0,0);
+    const diff = Math.round((today - d)/86400000);
+    if(diff<=0) return "heute";
+    if(diff===1) return "gestern";
+    if(diff<7) return "vor "+diff+" Tagen";
+    return "vor einer Weile";
+  }
+
+  // ---- Karten bauen ----------------------------------------------------
+  const grid = document.getElementById("grid");
+
+  function readScore(t){
+    if(!t.scoreKey) return null;
+    try{
+      const raw = localStorage.getItem(t.scoreKey);
+      if(raw==null) return null;
+      const num = parseInt(raw,10);
+      if(isNaN(num) || num<=0) return null;
+      return num + " " + (t.scoreLabel||"");
+    }catch(e){ return null; }
+  }
+
+  function isNewTool(t){
+    if(!t.added) return false;
+    const d = new Date(t.added); d.setHours(0,0,0,0);
+    const diff = Math.round((today - d)/86400000);
+    return diff>=0 && diff<=10;   // 10 Tage lang als NEU markiert
+  }
+
+  function toolCard(t){
+    const a = document.createElement("a");
+    a.className = "card";
+    a.href = t.file;
+    a.style.setProperty("--c", FACH[t.fach].color);
+
+    const lastOpen = get("hub-open-"+t.file, null);
+    let statusHtml;
+    const score = readScore(t);
+    if(score){
+      statusHtml = '<span class="pstat">'+score+'</span>';
+    } else if(!opened.includes(t.file)){
+      statusHtml = '<span class="pstat fresh">✨ Neu</span>';
+    } else {
+      const rel = ago(lastOpen);
+      statusHtml = '<span class="pstat">'+(rel?("zuletzt "+rel):"schon gespielt")+'</span>';
+    }
+
+    a.innerHTML =
+      '<div class="ic">'+t.icon+'</div>'+
+      '<div class="body">'+
+        '<div class="t">'+t.title+'</div>'+
+        '<div class="s">'+t.sub+'</div>'+
+        '<div class="meta"><span class="tag">'+t.type+'</span>'+statusHtml+'</div>'+
+      '</div>'+
+      (isNewTool(t) ? '<span class="neu">NEU</span>' : '');
+
+    a.addEventListener("click", function(){
+      if(!opened.includes(t.file)){ opened.push(t.file); set("hub-opened", JSON.stringify(opened)); }
+      set("hub-open-"+t.file, iso(today));
+      plays++; set("hub-plays", String(plays));
+      blip();
+    });
+    return a;
+  }
+
+  let curQuery = "";
+
+  function matchQuery(t){
+    if(!curQuery) return true;
+    const q = curQuery.toLowerCase();
+    return (t.title+" "+t.sub+" "+t.type+" "+FACH[t.fach].name).toLowerCase().indexOf(q) >= 0;
+  }
+
+  function render(klasse){
+    grid.innerHTML = "";
+    const soon = document.getElementById("soon");
+    const foot = document.querySelector(".foot");
+
+    if(klasse !== 3){
+      soon.style.display = "block";
+      foot.style.display = "none";
+      return;
+    }
+    soon.style.display = "none";
+    foot.style.display = "block";
+
+    let shown = 0;
+    FACH_ORDER.forEach(function(fk){
+      const tools = TOOLS.filter(t=>t.fach===fk && t.klasse===klasse && matchQuery(t));
+      if(!tools.length) return;
+      shown += tools.length;
+      const sec = document.createElement("section");
+      sec.className = "fach";
+      sec.innerHTML =
+        '<div class="fachhead" style="--c:'+FACH[fk].color+'">'+
+          '<span class="dot"></span><h2>'+FACH[fk].name+'</h2>'+
+          '<span class="count">'+tools.length+(tools.length===1?" Spiel":" Spiele")+'</span>'+
+        '</div>';
+      const cards = document.createElement("div");
+      cards.className = "cards";
+      tools.forEach(t=>cards.appendChild(toolCard(t)));
+      sec.appendChild(cards);
+      grid.appendChild(sec);
+    });
+
+    if(curQuery){
+      if(!shown){
+        const nr=document.createElement("div");
+        nr.className="nores";
+        nr.textContent='Kein Spiel zu „'+curQuery+'" gefunden. 🔍';
+        grid.appendChild(nr);
+      }
+      refreshDiscovered();
+      return;   // bei Suche keine Einladungs-Sektion
+    }
+
+    // Einladungs-Sektion für leere Fächer
+    const inv = document.createElement("section");
+    inv.className = "fach invite";
+    inv.innerHTML = '<div class="fachhead"><span class="dot" style="background:#cdd3e6"></span>'+
+      '<h2>Diese Fächer warten noch auf dein erstes Spiel</h2></div>';
+    const ic = document.createElement("div");
+    ic.className = "cards";
+    INVITES.forEach(function(v){
+      const d = document.createElement("div");
+      d.className = "invitecard";
+      d.style.setProperty("--c", v.color);
+      d.innerHTML = '<div class="ic">'+v.icon+'</div><div><div class="t">'+v.name+
+        '</div><div class="s">'+v.text+'</div></div>';
+      ic.appendChild(d);
+    });
+    inv.appendChild(ic);
+    grid.appendChild(inv);
+
+    refreshDiscovered();
+  }
+
+  // ---- Suchleiste ------------------------------------------------------
+  document.getElementById("search").addEventListener("input", function(e){
+    curQuery = e.target.value.trim();
+    render(parseInt(klasseSel.value,10));
+  });
+
+  // ---- Klassen-Dropdown (merkt sich die Wahl) -------------------------
+  const klasseSel = document.getElementById("klasse");
+  klasseSel.value = get("hub-klasse","3");
+  klasseSel.addEventListener("change", function(){
+    set("hub-klasse", klasseSel.value);
+    render(parseInt(klasseSel.value,10));
+    blip();
+  });
+
+  // ---- Sound (Web Audio) ----------------------------------------------
+  let actx=null;
+  let soundOn = get("hub-sound","1") !== "0";
+  function tone(freq,dur,delay,type){
+    if(!soundOn) return;
+    try{
+      actx = actx || new (window.AudioContext||window.webkitAudioContext)();
+      const o=actx.createOscillator(), g=actx.createGain();
+      o.type=type||"sine"; o.frequency.value=freq;
+      const t0=actx.currentTime+(delay||0);
+      g.gain.setValueAtTime(0,t0);
+      g.gain.linearRampToValueAtTime(.18,t0+.02);
+      g.gain.exponentialRampToValueAtTime(.0001,t0+dur);
+      o.connect(g); g.connect(actx.destination);
+      o.start(t0); o.stop(t0+dur+.02);
+    }catch(e){}
+  }
+  function blip(){ tone(660,.12,0,"triangle"); }
+  function fanfare(){ tone(523,.16,0); tone(659,.16,.12); tone(784,.28,.24); }
+
+  const soundBtn=document.getElementById("soundBtn");
+  function paintSound(){
+    soundBtn.textContent = soundOn ? "🔊 Ton" : "🔈 Ton aus";
+    soundBtn.setAttribute("aria-pressed", soundOn ? "true" : "false");
+  }
+  paintSound();
+  soundBtn.addEventListener("click", function(){
+    soundOn = !soundOn;
+    set("hub-sound", soundOn ? "1" : "0");
+    paintSound();
+    if(soundOn) blip();
+  });
+
+  // ---- Konfetti --------------------------------------------------------
+  function confetti(){
+    if(window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    const c=document.getElementById("confetti"), x=c.getContext("2d");
+    c.width=innerWidth; c.height=innerHeight;
+    const cols=["#5b8cff","#7c5cff","#fb923c","#f43f5e","#10b981","#f3960b","#ec4899"];
+    const P=[];
+    for(let i=0;i<130;i++){
+      P.push({x:Math.random()*c.width,y:-20-Math.random()*c.height*.4,
+        r:5+Math.random()*6,vy:2+Math.random()*3.5,vx:-1.5+Math.random()*3,
+        rot:Math.random()*6.28,vr:-.2+Math.random()*.4,col:cols[i%cols.length]});
+    }
+    let frames=0;
+    (function loop(){
+      x.clearRect(0,0,c.width,c.height); frames++;
+      P.forEach(p=>{
+        p.x+=p.vx; p.y+=p.vy; p.rot+=p.vr; p.vy+=.04;
+        x.save(); x.translate(p.x,p.y); x.rotate(p.rot); x.fillStyle=p.col;
+        x.fillRect(-p.r/2,-p.r/2,p.r,p.r*.6); x.restore();
+      });
+      if(frames<220) requestAnimationFrame(loop);
+      else x.clearRect(0,0,c.width,c.height);
+    })();
+  }
+
+  // ---- Vorlesen (TTS) --------------------------------------------------
+  document.getElementById("speak").addEventListener("click", function(){
+    try{
+      const k = parseInt(klasseSel.value,10);
+      let msg = "Hallo Paul! Willkommen in deiner Lernwelt. ";
+      if(k===3){
+        const n = TOOLS.filter(t=>t.klasse===3).length;
+        msg += "Du hast hier "+n+" Spiele. Deine Lern-Flamme brennt seit "+streak+(streak===1?" Tag":" Tagen")+". Viel Spaß beim Lernen!";
+      } else {
+        msg += "Klasse vier kommt nach den Sommerferien.";
+      }
+      const u=new SpeechSynthesisUtterance(msg); u.lang="de-DE"; u.rate=.96;
+      speechSynthesis.cancel(); speechSynthesis.speak(u);
+    }catch(e){}
+  });
+
+  // ---- Modal -----------------------------------------------------------
+  const ov=document.getElementById("overlay");
+  document.getElementById("how").addEventListener("click",()=>{ov.classList.add("on");blip();});
+  document.getElementById("closeModal").addEventListener("click",()=>ov.classList.remove("on"));
+  ov.addEventListener("click",e=>{ if(e.target===ov) ov.classList.remove("on"); });
+
+  function bindOverlay(id, closeId){
+    const o=document.getElementById(id);
+    document.getElementById(closeId).addEventListener("click",()=>o.classList.remove("on"));
+    o.addEventListener("click",e=>{ if(e.target===o) o.classList.remove("on"); });
+    return o;
+  }
+
+  // ---- Abzeichen-Wand --------------------------------------------------
+  const badgeOv = bindOverlay("badgeOverlay","closeBadges");
+  function buildBadges(){
+    const allOpened = TOOLS.every(t=>opened.includes(t.file));
+    const weeklyDone = get("hub-weekly-done",null) ? true : false;
+    const BADGES = [
+      {e:"🏅", n:"Gründer", earned:!!founded},
+      {e:"🔥", n:"3 Tage Flamme", earned:bestStreak>=3},
+      {e:"🔥", n:"7 Tage Flamme", earned:bestStreak>=7},
+      {e:"🧭", n:"5 Spiele entdeckt", earned:opened.length>=5},
+      {e:"🗺️", n:"Alle entdeckt", earned:allOpened},
+      {e:"⭐", n:"10× gespielt", earned:plays>=10},
+      {e:"🚀", n:"25× gespielt", earned:plays>=25},
+      {e:"🎯", n:"Wochenziel", earned:weeklyDone}
+    ];
+    const got = BADGES.filter(b=>b.earned).length;
+    document.getElementById("badgeCount").textContent = "Du hast "+got+" von "+BADGES.length+" Abzeichen gesammelt.";
+    const grid=document.getElementById("badgeGrid"); grid.innerHTML="";
+    BADGES.forEach(b=>{
+      const d=document.createElement("div");
+      d.className="badge"+(b.earned?" earned":"");
+      d.innerHTML='<div class="be">'+(b.earned?b.e:"🔒")+'</div><div class="bn">'+b.n+'</div>';
+      grid.appendChild(d);
+    });
+    return got;
+  }
+  document.getElementById("badges").addEventListener("click",()=>{ buildBadges(); badgeOv.classList.add("on"); blip(); });
+
+  // ---- Lernbericht -----------------------------------------------------
+  const reportOv = bindOverlay("reportOverlay","closeReport");
+  const REPORT = {
+    "klasse3-deutsch-praedikat-quiz.html":[{k:"praedikat-stats",f:"correctTotal",label:"richtig",kind:"obj"},{k:"praedikat-mistakes",label:"zu üben",kind:"len",warn:true}],
+    "klasse3-deutsch-subjekt-praedikat-quiz.html":[{k:"sp_xp",label:"XP",kind:"num"},{k:"sp_best",label:"Bestlauf",kind:"num"},{k:"sp_wrong",label:"zu üben",kind:"len",warn:true}],
+    "klasse3-deutsch-praedikat-profi-quiz.html":[{k:"praedikatprofi-xp",label:"XP",kind:"num"},{k:"praedikatprofi-bestscore",label:"Bestlauf",kind:"num"},{k:"praedikatprofi-mistakes",label:"zu üben",kind:"len",warn:true}],
+    "klasse3-deutsch-praedikat-springer.html":[{k:"praedikatSpringerRekord",label:"Rekord",kind:"num"}],
+    "klasse3-deutsch-praedikat-springer-3d.html":[{k:"praedikat3dRekord",label:"Rekord",kind:"num"}],
+    "klasse3-deutsch-praedikat-supermarkt.html":[{k:"supermarkt-xp",label:"XP",kind:"num"},{k:"supermarkt-right",label:"Wörter richtig",kind:"num"}],
+    "klasse3-deutsch-zeitangabe-sortierspiel.html":[{k:"zeitangabe-xp",label:"XP",kind:"num"},{k:"zeitangabe-beststreak",label:"Bestlauf",kind:"num"},{k:"zeitangabe-mistakes",label:"zu üben",kind:"len",warn:true}],
+    "klasse3-hsu-strom-quiz.html":[{k:"strom_xp",label:"XP",kind:"num"},{k:"strom_right",label:"richtig",kind:"num"},{k:"strom_wrong_count",label:"zu üben",kind:"num",warn:true}],
+    "klasse3-hsu-strom-jumpnrun.html":[{k:"strom-xp",label:"XP",kind:"num"},{k:"strom-beststreak",label:"Bestlauf",kind:"num"}],
+    "klasse3-musik-beethoven-quiz.html":[{k:"beethoven-games",label:"Spiele",kind:"num"},{k:"beethoven-wrong",label:"zu üben",kind:"len",warn:true}]
+  };
+  function repVal(row){
+    try{
+      const raw=localStorage.getItem(row.k); if(raw==null) return null;
+      if(row.kind==="num"){ const n=parseFloat(raw); return isNaN(n)?null:n; }
+      if(row.kind==="len"){ const a=JSON.parse(raw); return Array.isArray(a)?a.length:null; }
+      if(row.kind==="obj"){ const o=JSON.parse(raw); const v=o&&o[row.f]; return typeof v==="number"?v:null; }
+    }catch(e){}
+    return null;
+  }
+  function buildReport(){
+    const body=document.getElementById("reportBody"); body.innerHTML="";
+    let anyData=false;
+    FACH_ORDER.forEach(function(fk){
+      const tools=TOOLS.filter(t=>t.fach===fk && REPORT[t.file]);
+      if(!tools.length) return;
+      const sub=document.createElement("div"); sub.className="repsub";
+      sub.innerHTML='<h4><span class="rd" style="background:'+FACH[fk].color+'"></span>'+FACH[fk].name+'</h4>';
+      tools.forEach(function(t){
+        const parts=[];
+        REPORT[t.file].forEach(function(row){
+          const v=repVal(row);
+          if(v==null) return;
+          anyData=true;
+          if(row.warn && v>0) parts.push('<span class="warn">⚠ '+v+' '+row.label+'</span>');
+          else parts.push('<b>'+v+'</b> '+row.label);
+        });
+        const row=document.createElement("div"); row.className="reprow";
+        row.innerHTML='<span class="rn">'+t.icon+' '+t.title+'</span><span class="rv">'+
+          (parts.length?parts.join(" · "):"noch nicht gespielt")+'</span>';
+        sub.appendChild(row);
+      });
+      body.appendChild(sub);
+    });
+    if(!anyData){
+      const h=document.createElement("div"); h.className="rephint";
+      h.innerHTML="📂 Hier erscheinen Pauls Zahlen (XP, Bestläufe, Üben-Listen), sobald die Lernwelt über den <b>Server-Trick</b> geöffnet wird (python -m http.server). Beim normalen Doppelklick kann die Startseite die Spielstände der einzelnen Spiele aus technischen Gründen nicht lesen.";
+      body.insertBefore(h, body.firstChild);
+    }
+  }
+  document.getElementById("report").addEventListener("click",()=>{ buildReport(); reportOv.classList.add("on"); blip(); });
+
+  // ---- Neues Spiel erfinden -------------------------------------------
+  const createOv = bindOverlay("createOverlay","closeCreate");
+  const INSPO = [
+    "💡 Idee: ein Klötzchen-Abenteuer, bei dem du Blöcke für richtige Antworten abbaust.",
+    "💡 Idee: ein Fußball-Spiel, bei dem nur Treffer mit richtiger Lösung zählen.",
+    "💡 Idee: ein Weltraum-Renner, der dich durchs All zur nächsten Frage fliegen lässt.",
+    "💡 Idee: ein Technik-Quiz im coolen Apple-Look.",
+    "💡 Idee: ein Renn-Spiel, bei dem du mit richtigen Antworten schneller wirst.",
+    "💡 Tipp: Du kannst auch ganz frei sagen, was du dir wünschst!"
+  ];
+  document.getElementById("createBtn").addEventListener("click",()=>{
+    document.getElementById("inspo").textContent = INSPO[Math.floor(Math.random()*INSPO.length)];
+    createOv.classList.add("on"); blip();
+  });
+
+  // ---- Start -----------------------------------------------------------
+  render(parseInt(klasseSel.value,10));
+
+  if(isNewWorld){
+    document.getElementById("hello").textContent = "Willkommen in deiner neuen Lernwelt, Paul! 🎉";
+    setTimeout(()=>{ confetti(); fanfare(); }, 350);
+  }
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,853 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Strom-Springer ⚡ – Paul</title>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+  html,body { height:100%; overflow:hidden; font-family:'Fredoka',sans-serif; background:#0b1020; }
+  #wrap { position:fixed; inset:0; display:flex; align-items:center; justify-content:center; }
+  canvas { display:block; background:#0b1020; touch-action:none; }
+
+  /* HUD */
+  #hud {
+    position:absolute; top:0; left:0; right:0; padding:10px 14px;
+    display:flex; align-items:center; gap:12px; pointer-events:none; z-index:5;
+    color:#fff; text-shadow:0 2px 6px rgba(0,0,0,.5);
+  }
+  .pill {
+    background:rgba(15,23,42,.72); border:2px solid rgba(255,255,255,.18);
+    border-radius:999px; padding:6px 14px; font-weight:600; font-size:15px;
+    display:flex; align-items:center; gap:7px; backdrop-filter:blur(4px);
+  }
+  #xpbar-outer { flex:1; max-width:240px; height:14px; background:rgba(15,23,42,.72);
+    border:2px solid rgba(255,255,255,.18); border-radius:999px; overflow:hidden; }
+  #xpbar { height:100%; width:0%; background:linear-gradient(90deg,#fde047,#f59e0b);
+    border-radius:999px; transition:width .4s ease; }
+  #rank { color:#fde047; }
+  .streakglow { color:#fb923c; }
+
+  /* Frage-Banner */
+  #qbanner {
+    position:absolute; top:64px; left:50%; transform:translateX(-50%);
+    background:rgba(15,23,42,.92); border:3px solid #38bdf8; border-radius:18px;
+    padding:12px 22px; max-width:90%; text-align:center; color:#fff;
+    font-size:19px; font-weight:600; z-index:5; box-shadow:0 8px 30px rgba(56,189,248,.35);
+    display:none;
+  }
+  #qbanner small { display:block; color:#7dd3fc; font-size:13px; font-weight:500; margin-bottom:3px; }
+
+  /* Overlays */
+  .overlay {
+    position:absolute; inset:0; z-index:10; display:none;
+    align-items:center; justify-content:center; padding:24px;
+    background:radial-gradient(circle at 50% 30%, rgba(30,58,138,.55), rgba(8,11,24,.92));
+    backdrop-filter:blur(3px);
+  }
+  .card {
+    background:linear-gradient(160deg,#1e293b,#0f172a); border:3px solid rgba(56,189,248,.4);
+    border-radius:26px; padding:30px 26px; max-width:440px; width:100%; text-align:center;
+    color:#fff; box-shadow:0 20px 60px rgba(0,0,0,.5);
+  }
+  .card h1 { font-size:34px; font-weight:700; margin-bottom:6px; }
+  .card h1 .bolt { filter:drop-shadow(0 0 12px #fde047); }
+  .card .sub { color:#94a3b8; font-size:16px; margin-bottom:20px; }
+  .card .big { font-size:22px; font-weight:600; margin:14px 0; }
+  .statgrid { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin:18px 0; }
+  .stat { background:rgba(255,255,255,.06); border-radius:14px; padding:12px; }
+  .stat .v { font-size:24px; font-weight:700; color:#fde047; }
+  .stat .l { font-size:13px; color:#94a3b8; }
+  .btn {
+    display:inline-block; cursor:pointer; border:none; outline:none;
+    font-family:inherit; font-weight:700; font-size:20px; color:#0b1020;
+    background:linear-gradient(180deg,#fde047,#f59e0b); padding:15px 34px;
+    border-radius:16px; box-shadow:0 6px 0 #b45309, 0 10px 24px rgba(245,158,11,.4);
+    transition:transform .08s, box-shadow .08s; margin-top:8px;
+  }
+  .btn:active { transform:translateY(4px); box-shadow:0 2px 0 #b45309, 0 4px 12px rgba(245,158,11,.4); }
+  .ranklist { text-align:left; font-size:14px; color:#cbd5e1; margin-top:14px;
+    background:rgba(255,255,255,.04); border-radius:14px; padding:12px 16px; }
+  .ranklist div { padding:3px 0; }
+  .ranklist .cur { color:#fde047; font-weight:600; }
+
+  /* Touch controls */
+  #touch { position:absolute; inset:0; z-index:4; pointer-events:none; display:none; }
+  .tbtn {
+    position:absolute; bottom:22px; width:78px; height:78px; border-radius:50%;
+    background:rgba(15,23,42,.6); border:3px solid rgba(255,255,255,.25);
+    color:#fff; font-size:34px; display:flex; align-items:center; justify-content:center;
+    pointer-events:auto; user-select:none; backdrop-filter:blur(4px);
+  }
+  .tbtn:active { background:rgba(56,189,248,.4); }
+  #tleft { left:22px; } #tright { left:112px; } #tjump { right:22px; width:92px; height:92px; font-size:30px; }
+
+  #flash { position:absolute; inset:0; z-index:8; pointer-events:none; opacity:0;
+    background:#fff; transition:opacity .12s; }
+</style>
+</head>
+<body>
+<a href="index.html" id="hubHomeBtn" onclick="return hubGoHome(event)" aria-label="Zurueck zur Startseite">🏠 Startseite</a>
+<style>
+#hubHomeBtn{position:fixed;top:12px;left:12px;z-index:2147483600;display:inline-flex;align-items:center;gap:6px;text-decoration:none;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",system-ui,sans-serif;font-weight:700;font-size:14px;line-height:1;color:#1b1c22;background:rgba(255,255,255,.92);border:1px solid rgba(0,0,0,.08);border-radius:999px;padding:9px 14px;box-shadow:0 4px 14px rgba(20,22,40,.18);-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);cursor:pointer;}
+#hubHomeBtn:hover{background:#fff;}
+#hubHomeBtn:active{transform:translateY(1px);}
+#hubHomeBtn:focus-visible{outline:3px solid #9db4ff;outline-offset:2px;}
+@media print{#hubHomeBtn{display:none!important;}}
+</style>
+<script>function hubGoHome(e){if(e&&e.preventDefault)e.preventDefault();var u=null;try{u=localStorage.getItem("hub-url");}catch(x){}window.location.href=u||"index.html";return false;}</script>
+
+<div id="wrap">
+  <canvas id="game"></canvas>
+
+  <div id="hud">
+    <div class="pill">⚡ <span id="rank">Funke</span></div>
+    <div id="xpbar-outer"><div id="xpbar"></div></div>
+    <div class="pill">Lv <span id="lvl">1</span></div>
+    <div class="pill streakglow">🔥 <span id="streak">0</span></div>
+  </div>
+
+  <div id="qbanner"><small id="qtopic">STROMKREIS</small><span id="qtext"></span></div>
+
+  <div id="flash"></div>
+
+  <div id="touch">
+    <div class="tbtn" id="tleft">◀</div>
+    <div class="tbtn" id="tright">▶</div>
+    <div class="tbtn" id="tjump">⤒</div>
+  </div>
+
+  <!-- Startbildschirm -->
+  <div class="overlay" id="startScreen" style="display:flex;">
+    <div class="card">
+      <h1><span class="bolt">⚡</span> Strom-Springer</h1>
+      <div class="sub">Hallo Paul! Spring durch den Stromkreis und bring die Lampen zum Leuchten.</div>
+      <div class="statgrid">
+        <div class="stat"><div class="v" id="sLevel">1</div><div class="l">Level</div></div>
+        <div class="stat"><div class="v" id="sBest">0</div><div class="l">Beste Strähne</div></div>
+      </div>
+      <div class="ranklist" id="rankList"></div>
+      <button class="btn" id="startBtn">Los geht's! ⚡</button>
+      <div class="sub" style="margin-top:14px;font-size:13px;">
+        Steuerung: ← → laufen · Leertaste / ↑ springen (2× = Doppelsprung)
+      </div>
+    </div>
+  </div>
+
+  <!-- Level geschafft -->
+  <div class="overlay" id="winScreen">
+    <div class="card">
+      <h1>🏆 Geschafft!</h1>
+      <div class="sub">Du hast das Kraftwerk erreicht und alle Lampen erleuchtet!</div>
+      <div class="statgrid">
+        <div class="stat"><div class="v" id="wCorrect">0</div><div class="l">Richtig</div></div>
+        <div class="stat"><div class="v" id="wStreak">0</div><div class="l">Beste Strähne</div></div>
+        <div class="stat"><div class="v" id="wXP">0</div><div class="l">XP geholt</div></div>
+        <div class="stat"><div class="v" id="wOrbs">0</div><div class="l">Energie ⚡</div></div>
+      </div>
+      <button class="btn" id="againBtn">Nochmal spielen 🔁</button>
+    </div>
+  </div>
+
+  <!-- Level Up -->
+  <div class="overlay" id="lvlScreen">
+    <div class="card">
+      <h1>⚡ Level Up!</h1>
+      <div class="big">Du bist jetzt: <span id="newRank" style="color:#fde047"></span></div>
+      <div class="sub" id="lvlText"></div>
+      <button class="btn" id="lvlBtn">Weiter ⚡</button>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+"use strict";
+
+/* ============ DATEN ============ */
+const PLAYER = "Paul";
+
+// Ränge nach Level
+const RANKS = [
+  {lvl:1,  name:"Funke"},
+  {lvl:3,  name:"Glühbirne"},
+  {lvl:5,  name:"Taschenlampe"},
+  {lvl:8,  name:"Stromkreis-Bauer"},
+  {lvl:12, name:"Blitz-Held"},
+  {lvl:16, name:"Energie-Meister"}
+];
+function rankForLevel(lvl){
+  let r = RANKS[0];
+  for(const x of RANKS){ if(lvl>=x.lvl) r=x; }
+  return r.name;
+}
+
+// Fragen – Bayern LehrplanPLUS, HSU 3. Klasse: Strom & Stromkreis
+// correct = Index der richtigen Antwort
+const QUESTIONS = [
+  {topic:"STROMKREIS", q:"Damit eine Lampe leuchtet, muss der Stromkreis …", a:["geschlossen sein","offen sein","nass sein"], correct:0},
+  {topic:"LEITER", q:"Welches Material leitet den Strom?", a:["Metall","Holz","Gummi"], correct:0},
+  {topic:"NICHTLEITER", q:"Welches Material leitet den Strom NICHT?", a:["Plastik","Eisen","Kupfer"], correct:0},
+  {topic:"BATTERIE", q:"Wie heißen die zwei Pole einer Batterie?", a:["Plus und Minus","Oben und Unten","Rot und Blau"], correct:0},
+  {topic:"SCHALTER", q:"Womit kann man den Stromkreis öffnen und schließen?", a:["Schalter","Batterie","Kabel"], correct:0},
+  {topic:"SICHERHEIT", q:"Was darfst du NIEMALS in die Steckdose stecken?", a:["Finger oder Metall","einen Stecker","ein Ladegerät"], correct:0},
+  {topic:"SICHERHEIT", q:"Darfst du Elektrogeräte mit nassen Händen anfassen?", a:["Nein, das ist gefährlich","Ja, immer","Nur am Morgen"], correct:0},
+  {topic:"VERBRAUCHER", q:"Was ist ein Verbraucher im Stromkreis?", a:["die Lampe","das Kabel","die Batterie"], correct:0},
+  {topic:"STROMKREIS", q:"Was passiert bei einem offenen Stromkreis?", a:["Die Lampe leuchtet nicht","Die Lampe leuchtet hell","Die Batterie wird voll"], correct:0},
+  {topic:"KABEL", q:"Warum ist ein Kabel außen aus Plastik?", a:["Es schützt vor dem Strom","Damit es bunt ist","Damit es schwer ist"], correct:0},
+  {topic:"KRAFTWERK", q:"Woher kommt der Strom in der Steckdose?", a:["aus dem Kraftwerk","aus der Wand","von der Sonne im Zimmer"], correct:0},
+  {topic:"UMWELT", q:"Welche Energie ist umweltfreundlich?", a:["Windkraft","Kohle","Öl"], correct:0},
+  {topic:"WASSER", q:"Leitet Wasser den Strom?", a:["Ja, deshalb ist es gefährlich","Nein, nie","Nur warmes Wasser"], correct:0},
+  {topic:"BAUTEILE", q:"Was brauchst du für einen einfachen Stromkreis?", a:["Batterie, Kabel und Lampe","nur ein Kabel","nur eine Lampe"], correct:0}
+];
+
+/* ============ STATE / SPEICHER ============ */
+const SAVE = {
+  get xp(){ return +localStorage.getItem('strom-xp')||0; },
+  set xp(v){ localStorage.setItem('strom-xp',v); },
+  get level(){ return +localStorage.getItem('strom-level')||1; },
+  set level(v){ localStorage.setItem('strom-level',v); },
+  get games(){ return +localStorage.getItem('strom-games')||0; },
+  set games(v){ localStorage.setItem('strom-games',v); },
+  get best(){ return +localStorage.getItem('strom-beststreak')||0; },
+  set best(v){ localStorage.setItem('strom-beststreak',v); }
+};
+
+const XP_PER_LEVEL = 100;
+function xpInLevel(){ return SAVE.xp % XP_PER_LEVEL; }
+
+/* ============ AUDIO ============ */
+let actx=null;
+function ac(){ if(!actx){ try{ actx=new (window.AudioContext||window.webkitAudioContext)(); }catch(e){} } return actx; }
+function tone(freq,dur,type='sine',vol=0.18,when=0){
+  const c=ac(); if(!c) return;
+  const t=c.currentTime+when;
+  const o=c.createOscillator(), g=c.createGain();
+  o.type=type; o.frequency.setValueAtTime(freq,t);
+  g.gain.setValueAtTime(0,t); g.gain.linearRampToValueAtTime(vol,t+0.02);
+  g.gain.exponentialRampToValueAtTime(0.0001,t+dur);
+  o.connect(g); g.connect(c.destination); o.start(t); o.stop(t+dur+0.05);
+}
+const SFX={
+  jump(){ tone(420,0.12,'square',0.12); },
+  djump(){ tone(620,0.12,'square',0.13); },
+  orb(){ tone(880,0.08,'sine',0.14); tone(1320,0.09,'sine',0.1,0.04); },
+  correct(){ [523,659,784,1047].forEach((f,i)=>tone(f,0.16,'triangle',0.16,i*0.07)); },
+  wrong(){ tone(160,0.22,'sawtooth',0.14); tone(120,0.26,'sawtooth',0.12,0.05); },
+  levelup(){ [523,659,784,1047,1318].forEach((f,i)=>tone(f,0.2,'triangle',0.17,i*0.09)); },
+  splash(){ tone(300,0.18,'sine',0.12); tone(200,0.2,'sine',0.1,0.05); }
+};
+
+/* ============ CANVAS ============ */
+const canvas=document.getElementById('game');
+const ctx=canvas.getContext('2d');
+let W=0,H=0,DPR=1;
+function resize(){
+  DPR=Math.min(window.devicePixelRatio||1,2);
+  W=window.innerWidth; H=window.innerHeight;
+  canvas.style.width=W+'px'; canvas.style.height=H+'px';
+  canvas.width=Math.floor(W*DPR); canvas.height=Math.floor(H*DPR);
+  ctx.setTransform(DPR,0,0,DPR,0,0);
+}
+window.addEventListener('resize',resize); resize();
+
+/* ============ WELT ============ */
+const GROUND_H=90;          // Höhe des Bodens vom unteren Rand
+const GRAV=0.7, JUMP_V=-13.5, MOVE=4.2, MAXFALL=16;
+const TILE=64;
+
+let cam=0;                  // Kamera x
+let game=null;              // aktuelles Spielobjekt
+
+function groundY(){ return H-GROUND_H; }
+
+// Baue ein Level aus Segmenten
+function buildLevel(){
+  // 6 Fragen pro Runde, zufällig gemischt
+  const pool=[...QUESTIONS].sort(()=>Math.random()-0.5).slice(0,6);
+
+  const platforms=[]; // {x,y,w,h}
+  const orbs=[];      // {x,y,got}
+  const waters=[];    // {x,w}  Pfütze auf dem Boden
+  const gates=[];     // Fragetore {x, q, bulbs:[{x,y,r,ans,idx,lit,wrong}], solved}
+
+  let x=0;
+  const gy=groundY();
+
+  // Startbereich
+  x=400;
+
+  pool.forEach((qq,qi)=>{
+    // ein paar Plattformen + Orbs als Lauf-Passage
+    const segs=2+Math.floor(Math.random()*2);
+    for(let s=0;s<segs;s++){
+      const pw=120+Math.random()*80;
+      const ph=120+Math.random()*120;
+      const py=gy-ph;
+      platforms.push({x:x,y:py,w:pw,h:20});
+      orbs.push({x:x+pw/2,y:py-40,got:false});
+      // Wasserpfütze zwischen Plattformen (zum Drüberspringen)
+      if(s<segs-1 && Math.random()<0.6){
+        waters.push({x:x+pw+30,w:60+Math.random()*50});
+      }
+      x+=pw+150+Math.random()*60;
+    }
+
+    // Fragetor: drei Glühbirnen in verschiedenen Höhen, Energiebarriere
+    const gx=x+60;
+    const opts=qq.a.map((txt,idx)=>({txt,idx}));
+    // Positionen der Birnen (verschiedene Höhen -> Doppelsprung nötig)
+    const heights=[gy-90, gy-200, gy-310];
+    // mische Höhen zufällig
+    const order=[0,1,2].sort(()=>Math.random()-0.5);
+    const bulbs=opts.map((o,i)=>({
+      x:gx + i*150 + 40,
+      y:heights[order[i]],
+      r:42, ans:o.txt, idx:o.idx, lit:false, wrong:false, pop:0
+    }));
+    gates.push({x:gx-40, barrierX:gx+ opts.length*150 + 90, q:qq, bulbs, solved:false});
+    x=gx + opts.length*150 + 220;
+  });
+
+  // Ziel: Kraftwerk
+  const goalX=x+120;
+
+  return {
+    platforms, orbs, waters, gates, goalX,
+    player:{ x:120, y:gy-120, w:38, h:48, vx:0, vy:0, onGround:false, jumps:0, face:1, runT:0, dead:0 },
+    spawnX:120, spawnY:gy-120,
+    correct:0, xpGained:0, orbsGot:0, streak:0,
+    finished:false, started:performance.now()
+  };
+}
+
+/* ============ EINGABE ============ */
+const keys={left:false,right:false,jump:false};
+let jumpEdge=false; // für Einzeldruck-Erkennung
+window.addEventListener('keydown',e=>{
+  if(['ArrowLeft','a','A'].includes(e.key)) keys.left=true;
+  if(['ArrowRight','d','D'].includes(e.key)) keys.right=true;
+  if([' ','ArrowUp','w','W'].includes(e.key)){ if(!keys.jump) jumpEdge=true; keys.jump=true; e.preventDefault(); }
+});
+window.addEventListener('keyup',e=>{
+  if(['ArrowLeft','a','A'].includes(e.key)) keys.left=false;
+  if(['ArrowRight','d','D'].includes(e.key)) keys.right=false;
+  if([' ','ArrowUp','w','W'].includes(e.key)) keys.jump=false;
+});
+// Touch
+function bindTouch(id,on){
+  const el=document.getElementById(id);
+  const set=v=>e=>{ e.preventDefault(); on(v); };
+  el.addEventListener('touchstart',set(true),{passive:false});
+  el.addEventListener('touchend',set(false),{passive:false});
+  el.addEventListener('touchcancel',set(false),{passive:false});
+}
+bindTouch('tleft',v=>keys.left=v);
+bindTouch('tright',v=>keys.right=v);
+bindTouch('tjump',v=>{ if(v && !keys.jump) jumpEdge=true; keys.jump=v; });
+// Touch-Controls nur auf Touch-Geräten
+if('ontouchstart' in window){ document.getElementById('touch').style.display='block'; }
+
+/* ============ KONFETTI ============ */
+let confetti=[];
+function burst(cx,cy,n=40){
+  const cols=['#fde047','#38bdf8','#f59e0b','#a78bfa','#34d399','#fb7185'];
+  for(let i=0;i<n;i++){
+    confetti.push({
+      x:cx,y:cy,
+      vx:(Math.random()-0.5)*9, vy:-Math.random()*10-3,
+      g:0.35+Math.random()*0.2, life:60+Math.random()*30,
+      col:cols[i%cols.length], s:5+Math.random()*6, rot:Math.random()*6, vr:(Math.random()-0.5)*0.4
+    });
+  }
+}
+function updateConfetti(){
+  confetti.forEach(p=>{ p.vy+=p.g; p.x+=p.vx; p.y+=p.vy; p.life--; p.rot+=p.vr; });
+  confetti=confetti.filter(p=>p.life>0 && p.y<H+40);
+}
+function drawConfetti(){
+  confetti.forEach(p=>{
+    ctx.save(); ctx.translate(p.x,p.y); ctx.rotate(p.rot);
+    ctx.fillStyle=p.col; ctx.fillRect(-p.s/2,-p.s/2,p.s,p.s*0.6); ctx.restore();
+  });
+}
+
+/* ============ ZEICHNEN ============ */
+function drawBackground(){
+  // Himmel
+  const g=ctx.createLinearGradient(0,0,0,H);
+  g.addColorStop(0,'#1e1b4b'); g.addColorStop(0.5,'#312e81'); g.addColorStop(1,'#1e3a8a');
+  ctx.fillStyle=g; ctx.fillRect(0,0,W,H);
+
+  // Sterne / Funken (parallax weit)
+  ctx.fillStyle='rgba(253,224,71,.5)';
+  for(let i=0;i<40;i++){
+    const sx=((i*173 - cam*0.15)%(W+40)+W+40)%(W+40)-20;
+    const sy=(i*97)% (H-GROUND_H-120);
+    ctx.globalAlpha=0.3+0.5*Math.abs(Math.sin(i+performance.now()/900));
+    ctx.fillRect(sx,sy,2,2);
+  }
+  ctx.globalAlpha=1;
+
+  // ferne Hügel (parallax)
+  ctx.fillStyle='#1e293b';
+  const hy=groundY()+10;
+  for(let i=-1;i<W/180+2;i++){
+    const hx=((i*180 - cam*0.3)%(W+180)+W+180)%(W+180)-180;
+    ctx.beginPath();
+    ctx.moveTo(hx,hy); ctx.quadraticCurveTo(hx+90,hy-90,hx+180,hy); ctx.fill();
+  }
+
+  // Strommasten (parallax mittel)
+  for(let i=0;i<8;i++){
+    const px=((i*420 - cam*0.55)%(8*420+W)+8*420+W)%(8*420+W)-200;
+    drawPylon(px, groundY());
+  }
+}
+function drawPylon(px,by){
+  ctx.strokeStyle='rgba(148,163,184,.45)'; ctx.lineWidth=4;
+  const top=by-230;
+  ctx.beginPath();
+  ctx.moveTo(px-22,by); ctx.lineTo(px,top); ctx.lineTo(px+22,by); // Beine
+  ctx.moveTo(px-26,by-70); ctx.lineTo(px+26,by-70);
+  ctx.moveTo(px-34,by-150); ctx.lineTo(px+34,by-150);
+  ctx.moveTo(px-12,top); ctx.lineTo(px+12,top);
+  ctx.stroke();
+  // hängende Leitung
+  ctx.strokeStyle='rgba(148,163,184,.3)'; ctx.lineWidth=2;
+  ctx.beginPath(); ctx.moveTo(px+34,by-150);
+  ctx.quadraticCurveTo(px+34+210,by-110,px+34+420,by-150); ctx.stroke();
+}
+
+function drawGround(){
+  const gy=groundY();
+  // Bodenkörper (2.5D-Tiefe)
+  ctx.fillStyle='#0f3d2e'; ctx.fillRect(0,gy+8,W,GROUND_H);
+  ctx.fillStyle='#14532d'; ctx.fillRect(0,gy+8,W,18);
+  // Grasoberkante
+  ctx.fillStyle='#22c55e'; ctx.fillRect(0,gy,W,10);
+  ctx.fillStyle='#4ade80'; ctx.fillRect(0,gy,W,4);
+  // Streifen für Bewegungsgefühl
+  ctx.fillStyle='rgba(0,0,0,.12)';
+  for(let i=0;i<W/64+2;i++){
+    const tx=((i*64 - cam)%(W+64)+W+64)%(W+64)-64;
+    ctx.fillRect(tx+30,gy+14,4,GROUND_H);
+  }
+}
+
+function drawWater(w){
+  const gy=groundY();
+  const sx=w.x-cam;
+  if(sx+w.w<-40||sx>W+40) return;
+  ctx.fillStyle='rgba(56,189,248,.55)';
+  ctx.fillRect(sx,gy+2,w.w,16);
+  ctx.fillStyle='rgba(125,211,252,.8)';
+  for(let i=0;i<w.w;i+=12){
+    const wob=Math.sin((performance.now()/200)+(w.x+i))*2;
+    ctx.fillRect(sx+i,gy+wob,7,3);
+  }
+  // Warnzeichen
+  ctx.fillStyle='rgba(255,255,255,.5)'; ctx.font='14px Fredoka';
+  ctx.textAlign='center'; ctx.fillText('⚡',sx+w.w/2,gy-6);
+}
+
+function drawPlatform(p){
+  const sx=p.x-cam;
+  if(sx+p.w<-40||sx>W+40) return;
+  // Pfeiler-Schatten (2.5D)
+  ctx.fillStyle='rgba(0,0,0,.25)';
+  ctx.fillRect(sx+6,p.y+6,p.w,groundY()-p.y);
+  // Pfeiler
+  ctx.fillStyle='#334155'; ctx.fillRect(sx,p.y,p.w,groundY()-p.y);
+  ctx.fillStyle='#475569'; ctx.fillRect(sx,p.y,p.w,6);
+  // Oberseite
+  ctx.fillStyle='#64748b'; ctx.fillRect(sx,p.y-6,p.w,10);
+  ctx.fillStyle='#94a3b8'; ctx.fillRect(sx,p.y-6,p.w,3);
+}
+
+function drawOrb(o){
+  if(o.got) return;
+  const sx=o.x-cam;
+  if(sx<-40||sx>W+40) return;
+  const pulse=1+0.15*Math.sin(performance.now()/200+o.x);
+  ctx.save();
+  ctx.globalAlpha=0.3;
+  ctx.fillStyle='#fde047'; ctx.beginPath();
+  ctx.arc(sx,o.y,18*pulse,0,7); ctx.fill();
+  ctx.globalAlpha=1;
+  ctx.fillStyle='#fde047'; ctx.beginPath(); ctx.arc(sx,o.y,9,0,7); ctx.fill();
+  ctx.fillStyle='#fff7cc'; ctx.font='16px Fredoka'; ctx.textAlign='center';
+  ctx.textBaseline='middle'; ctx.fillText('⚡',sx,o.y+1);
+  ctx.restore();
+}
+
+function drawBulb(b){
+  const sx=b.x-cam;
+  if(sx<-120||sx>W+120) return;
+  const glow = b.lit ? '#fde047' : (b.wrong? '#ef4444' : '#475569');
+  // Glühen
+  if(b.lit){
+    ctx.save(); ctx.globalAlpha=0.5;
+    const rg=ctx.createRadialGradient(sx,b.y,4,sx,b.y,90);
+    rg.addColorStop(0,'#fde047'); rg.addColorStop(1,'rgba(253,224,71,0)');
+    ctx.fillStyle=rg; ctx.beginPath(); ctx.arc(sx,b.y,90,0,7); ctx.fill(); ctx.restore();
+  }
+  // Glaskolben
+  ctx.fillStyle = glow;
+  ctx.strokeStyle='rgba(255,255,255,.35)'; ctx.lineWidth=3;
+  ctx.beginPath(); ctx.arc(sx,b.y,b.r,0,7); ctx.fill(); ctx.stroke();
+  // Sockel
+  ctx.fillStyle='#94a3b8'; ctx.fillRect(sx-14,b.y+b.r-4,28,16);
+  ctx.fillStyle='#64748b'; ctx.fillRect(sx-14,b.y+b.r+4,28,4);
+  // Faden
+  if(b.lit){ ctx.strokeStyle='#fff'; } else { ctx.strokeStyle='rgba(255,255,255,.4)'; }
+  ctx.lineWidth=2; ctx.beginPath();
+  ctx.moveTo(sx-8,b.y+6); ctx.lineTo(sx-3,b.y-6); ctx.lineTo(sx+3,b.y+6); ctx.lineTo(sx+8,b.y-6);
+  ctx.stroke();
+  // Antwort-Text
+  ctx.fillStyle='#fff'; ctx.font='600 15px Fredoka'; ctx.textAlign='center'; ctx.textBaseline='middle';
+  wrapText(b.ans, sx, b.y+b.r+30, 150, 16);
+}
+function wrapText(text,x,y,maxW,lh){
+  const words=text.split(' '); let line=''; const lines=[];
+  for(const w of words){
+    const t=line?line+' '+w:w;
+    if(ctx.measureText(t).width>maxW && line){ lines.push(line); line=w; } else line=t;
+  }
+  lines.push(line);
+  lines.forEach((l,i)=>ctx.fillText(l,x,y+i*lh));
+}
+
+function drawBarrier(g){
+  if(g.solved) return;
+  const sx=g.barrierX-cam;
+  if(sx<-40||sx>W+40) return;
+  const gy=groundY();
+  ctx.save();
+  ctx.strokeStyle='#38bdf8'; ctx.lineWidth=3; ctx.globalAlpha=0.8;
+  for(let lane=0;lane<3;lane++){
+    ctx.beginPath();
+    let yy=gy;
+    ctx.moveTo(sx-8+lane*8, yy);
+    while(yy>gy-300){
+      yy-=22;
+      ctx.lineTo(sx-8+lane*8 + (Math.random()*16-8), yy);
+    }
+    ctx.stroke();
+  }
+  ctx.globalAlpha=0.15; ctx.fillStyle='#38bdf8'; ctx.fillRect(sx-12,gy-300,24,300);
+  ctx.restore();
+}
+
+function drawGoal(gx){
+  const sx=gx-cam; const gy=groundY();
+  if(sx<-200||sx>W+120) return;
+  // Kraftwerk
+  ctx.fillStyle='#475569'; ctx.fillRect(sx-10,gy-150,90,150);
+  ctx.fillStyle='#64748b'; ctx.fillRect(sx-10,gy-150,90,14);
+  // Schornsteine
+  ctx.fillStyle='#334155'; ctx.fillRect(sx+10,gy-220,18,70); ctx.fillRect(sx+42,gy-210,18,60);
+  // Blitz-Schild
+  ctx.fillStyle='#fde047'; ctx.font='40px Fredoka'; ctx.textAlign='center'; ctx.textBaseline='middle';
+  ctx.fillText('⚡',sx+35,gy-90);
+  // Fahne
+  ctx.strokeStyle='#fff'; ctx.lineWidth=3; ctx.beginPath();
+  ctx.moveTo(sx-30,gy); ctx.lineTo(sx-30,gy-170); ctx.stroke();
+  ctx.fillStyle='#22c55e';
+  const fw=10*Math.sin(performance.now()/200);
+  ctx.beginPath(); ctx.moveTo(sx-30,gy-170);
+  ctx.lineTo(sx-30+50+fw,gy-160); ctx.lineTo(sx-30,gy-150); ctx.fill();
+}
+
+function drawPlayer(p){
+  const sx=p.x-cam, sy=p.y;
+  ctx.save();
+  ctx.translate(sx+p.w/2, sy+p.h/2);
+  ctx.scale(p.face,1);
+  // Glow
+  ctx.globalAlpha=0.35; const rg=ctx.createRadialGradient(0,0,2,0,0,42);
+  rg.addColorStop(0,'#38bdf8'); rg.addColorStop(1,'rgba(56,189,248,0)');
+  ctx.fillStyle=rg; ctx.beginPath(); ctx.arc(0,0,42,0,7); ctx.fill();
+  ctx.globalAlpha=1;
+  // Körper
+  ctx.fillStyle='#38bdf8';
+  roundRect(-p.w/2,-p.h/2,p.w,p.h,12); ctx.fill();
+  ctx.fillStyle='#0ea5e9'; roundRect(-p.w/2,-p.h/2,p.w,8,12); ctx.fill();
+  // Antenne mit Funke
+  ctx.strokeStyle='#fde047'; ctx.lineWidth=3;
+  ctx.beginPath(); ctx.moveTo(0,-p.h/2); ctx.lineTo(2,-p.h/2-10); ctx.stroke();
+  ctx.fillStyle='#fde047'; ctx.beginPath(); ctx.arc(2,-p.h/2-12,4,0,7); ctx.fill();
+  // Augen
+  ctx.fillStyle='#fff'; ctx.beginPath(); ctx.arc(-6,-6,6,0,7); ctx.arc(8,-6,6,0,7); ctx.fill();
+  ctx.fillStyle='#0b1020'; ctx.beginPath(); ctx.arc(-4,-6,3,0,7); ctx.arc(10,-6,3,0,7); ctx.fill();
+  // Lächeln
+  ctx.strokeStyle='#0b1020'; ctx.lineWidth=2; ctx.beginPath(); ctx.arc(1,4,7,0.1,Math.PI-0.1); ctx.stroke();
+  // Beine (laufanimation)
+  const swing = p.onGround ? Math.sin(p.runT)*6 : 4;
+  ctx.fillStyle='#0ea5e9';
+  ctx.fillRect(-10,p.h/2-2, 7, 8+swing);
+  ctx.fillRect(4,p.h/2-2, 7, 8-swing);
+  ctx.restore();
+}
+function roundRect(x,y,w,h,r){
+  ctx.beginPath();
+  ctx.moveTo(x+r,y); ctx.arcTo(x+w,y,x+w,y+h,r); ctx.arcTo(x+w,y+h,x,y+h,r);
+  ctx.arcTo(x,y+h,x,y,r); ctx.arcTo(x,y,x+w,y,r); ctx.closePath();
+}
+
+/* ============ PHYSIK / LOGIK ============ */
+function aabb(ax,ay,aw,ah,bx,by,bw,bh){
+  return ax<bx+bw && ax+aw>bx && ay<by+bh && ay+ah>by;
+}
+
+function activeGate(){
+  // erstes ungelöstes Gate, dessen Bereich der Spieler erreicht hat
+  for(const g of game.gates){
+    if(!g.solved && game.player.x > g.x-200) return g;
+  }
+  return null;
+}
+
+function update(){
+  if(game.finished) return;
+  const p=game.player; const gy=groundY();
+
+  // Respawn-Animation
+  if(p.dead>0){ p.dead--; if(p.dead===0){ p.x=game.spawnX; p.y=game.spawnY; p.vx=0; p.vy=0; } else return; }
+
+  // Bewegung
+  p.vx=0;
+  if(keys.left){ p.vx=-MOVE; p.face=-1; }
+  if(keys.right){ p.vx=MOVE; p.face=1; }
+
+  // Springen (Doppelsprung)
+  if(jumpEdge){
+    if(p.onGround){ p.vy=JUMP_V; p.onGround=false; p.jumps=1; SFX.jump(); }
+    else if(p.jumps<2){ p.vy=JUMP_V*0.95; p.jumps=2; SFX.djump(); }
+  }
+  jumpEdge=false;
+
+  // Barriere blockiert Vorwärts wenn Gate ungelöst
+  const g=activeGate();
+  if(g && !g.solved){
+    const wall=g.barrierX;
+    if(p.x+p.w > wall && p.vx>0){ p.vx=0; if(p.x+p.w>wall) p.x=wall-p.w; }
+  }
+
+  p.x+=p.vx;
+  p.vy=Math.min(p.vy+GRAV,MAXFALL);
+  p.y+=p.vy;
+
+  if(p.x<0) p.x=0;
+  if(p.x+p.w>game.goalX+40) p.x=game.goalX+40-p.w;
+
+  // Boden / Plattform-Kollision
+  p.onGround=false;
+  // Boden
+  if(p.y+p.h>=gy){ p.y=gy-p.h; p.vy=0; p.onGround=true; p.jumps=0; }
+  // Plattformen (nur von oben landen)
+  for(const pl of game.platforms){
+    if(aabb(p.x,p.y,p.w,p.h, pl.x,pl.y,pl.w,pl.h)){
+      if(p.vy>=0 && (p.y+p.h)-p.vy <= pl.y+12){
+        p.y=pl.y-p.h; p.vy=0; p.onGround=true; p.jumps=0;
+      }
+    }
+  }
+
+  // Lauf-Timer für Animation
+  if(p.onGround && Math.abs(p.vx)>0.1) p.runT+=0.3; else p.runT=0;
+
+  // Wasser -> Respawn
+  for(const w of game.waters){
+    if(p.onGround && p.x+p.w>w.x && p.x<w.x+w.w && Math.abs((p.y+p.h)-gy)<6){
+      SFX.splash(); p.dead=30; game.streak=0; updateHUD(); break;
+    }
+  }
+
+  // Orbs einsammeln
+  for(const o of game.orbs){
+    if(!o.got && aabb(p.x,p.y,p.w,p.h, o.x-16,o.y-16,32,32)){
+      o.got=true; game.orbsGot++; SFX.orb(); addXP(5,false);
+      burst(o.x-cam,o.y,12);
+    }
+  }
+
+  // Glühbirne treffen (Antwort)
+  if(g && !g.solved){
+    for(const b of g.bulbs){
+      if(aabb(p.x,p.y,p.w,p.h, b.x-b.r,b.y-b.r,b.r*2,b.r*2)){
+        answerBulb(g,b);
+        break;
+      }
+    }
+  }
+
+  // Ziel erreicht
+  if(!game.finished && p.x+p.w>=game.goalX){ winLevel(); }
+
+  // Kamera
+  const target=p.x - W*0.35;
+  cam += (target-cam)*0.12;
+  if(cam<0) cam=0;
+  const maxCam=game.goalX+120-W;
+  if(cam>maxCam) cam=Math.max(0,maxCam);
+}
+
+function answerBulb(g,b){
+  if(g.solved) return;
+  if(b.idx===g.q.correct){
+    b.lit=true; g.solved=true; game.correct++; game.streak++;
+    if(game.streak>SAVE.best){ SAVE.best=game.streak; }
+    SFX.correct();
+    burst(b.x-cam,b.y,40);
+    flash('#fde047');
+    addXP(20+ Math.min(game.streak,8)*3, true);
+    showBanner(null); // verstecke nach kurzer Zeit
+    updateHUD();
+  } else {
+    if(b.wrong) return;
+    b.wrong=true; setTimeout(()=>b.wrong=false,500);
+    game.streak=0; SFX.wrong(); flash('#ef4444');
+    // sanft zurückstupsen
+    game.player.vx=-6*game.player.face; game.player.vy=-6;
+    updateHUD();
+  }
+}
+
+let bannerGate=null;
+function maybeShowBanner(){
+  const g=activeGate();
+  if(g && !g.solved){
+    if(bannerGate!==g){
+      bannerGate=g;
+      document.getElementById('qtopic').textContent=g.q.topic;
+      document.getElementById('qtext').textContent=g.q.q;
+      document.getElementById('qbanner').style.display='block';
+    }
+  } else {
+    bannerGate=null;
+    document.getElementById('qbanner').style.display='none';
+  }
+}
+function showBanner(){ /* gesteuert über maybeShowBanner */ }
+
+let xpFlashUntil=0;
+function addXP(amount,big){
+  const before=SAVE.level;
+  SAVE.xp+=amount;
+  game.xpGained+=amount;
+  const newLevel=Math.floor(SAVE.xp/XP_PER_LEVEL)+1;
+  if(newLevel>before){
+    SAVE.level=newLevel;
+    setTimeout(()=>levelUp(before,newLevel),big?500:0);
+  }
+  updateHUD();
+}
+
+/* ============ FLASH ============ */
+function flash(col){
+  const f=document.getElementById('flash');
+  f.style.background=col; f.style.opacity='0.45';
+  setTimeout(()=>f.style.opacity='0',120);
+}
+
+/* ============ HUD ============ */
+function updateHUD(){
+  document.getElementById('rank').textContent=rankForLevel(SAVE.level);
+  document.getElementById('lvl').textContent=SAVE.level;
+  document.getElementById('streak').textContent=game?game.streak:0;
+  const pct=(xpInLevel()/XP_PER_LEVEL)*100;
+  document.getElementById('xpbar').style.width=pct+'%';
+}
+
+/* ============ SCREENS ============ */
+let running=false;
+function levelUp(from,to){
+  running=false;
+  SFX.levelup();
+  document.getElementById('newRank').textContent=rankForLevel(to);
+  document.getElementById('lvlText').textContent='Du hast Level '+to+' erreicht! Mach weiter so, '+PLAYER+'!';
+  document.getElementById('lvlScreen').style.display='flex';
+  burst(W/2,H/2,60);
+}
+function winLevel(){
+  game.finished=true; running=false;
+  SAVE.games++;
+  SFX.levelup();
+  burst(W/2,H/2-40,80);
+  setTimeout(()=>burst(W*0.3,H/2,50),250);
+  setTimeout(()=>burst(W*0.7,H/2,50),450);
+  document.getElementById('wCorrect').textContent=game.correct+'/'+game.gates.length;
+  document.getElementById('wStreak').textContent=SAVE.best;
+  document.getElementById('wXP').textContent=game.xpGained;
+  document.getElementById('wOrbs').textContent=game.orbsGot;
+  setTimeout(()=>{ document.getElementById('winScreen').style.display='flex'; },700);
+}
+
+function startGame(){
+  ac(); // Audio entsperren
+  document.getElementById('startScreen').style.display='none';
+  document.getElementById('winScreen').style.display='none';
+  document.getElementById('lvlScreen').style.display='none';
+  game=buildLevel(); cam=0; confetti=[];
+  updateHUD();
+  running=true;
+}
+
+/* ============ LOOP ============ */
+function loop(){
+  if(running && game){
+    update();
+    maybeShowBanner();
+  }
+  updateConfetti();
+
+  // Render
+  ctx.clearRect(0,0,W,H);
+  drawBackground();
+  if(game){
+    game.waters.forEach(drawWater);
+    drawGoal(game.goalX);
+    game.platforms.forEach(drawPlatform);
+    game.gates.forEach(g=>{ g.bulbs.forEach(drawBulb); drawBarrier(g); });
+    game.orbs.forEach(drawOrb);
+  }
+  drawGround();
+  if(game && game.player.dead===0) drawPlayer(game.player);
+  drawConfetti();
+
+  requestAnimationFrame(loop);
+}
+
+/* ============ INIT ============ */
+function fillRankList(){
+  const cur=rankForLevel(SAVE.level);
+  document.getElementById('rankList').innerHTML =
+    '<div style="color:#94a3b8;margin-bottom:4px;">Deine Ränge:</div>' +
+    RANKS.map(r=>`<div class="${r.name===cur?'cur':''}">⚡ ${r.name} <span style="color:#64748b">(ab Lv ${r.lvl})</span></div>`).join('');
+}
+document.getElementById('sLevel').textContent=SAVE.level;
+document.getElementById('sBest').textContent=SAVE.best;
+fillRankList();
+updateHUD();
+
+document.getElementById('startBtn').onclick=startGame;
+document.getElementById('againBtn').onclick=()=>{
+  document.getElementById('sLevel').textContent=SAVE.level;
+  document.getElementById('sBest').textContent=SAVE.best;
+  fillRankList(); startGame();
+};
+document.getElementById('lvlBtn').onclick=()=>{
+  document.getElementById('lvlScreen').style.display='none';
+  running=true;
+};
+
+loop();
+
+// für Tests
+window.__STROM__={ buildLevel, RANKS, rankForLevel, QUESTIONS, SAVE, aabb };
+})();
+</script>
+</body>
+</html>
