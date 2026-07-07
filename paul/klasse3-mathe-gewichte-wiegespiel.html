@@ -1,0 +1,716 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Wiege-Meister · Pauls Marktstand</title>
+<style>
+  :root{
+    --bg:#eef1f7; --bg2:#e6eaf4; --card:#ffffff; --ink:#1b1c22; --muted:#71768a;
+    --line:#e4e7f0; --mathe:#10b981; --mathe2:#0ea371; --gold:#f5b73c; --gold2:#e79a1a;
+    --flame1:#fb923c; --flame2:#f43f5e; --wrong:#ef4444;
+    --radius:22px; --shadow:0 1px 2px rgba(20,22,40,.05), 0 12px 30px rgba(20,22,40,.08);
+    --font:-apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",system-ui,sans-serif;
+    --round:ui-rounded,"SF Pro Rounded",-apple-system,system-ui,sans-serif;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    font-family:var(--font);color:var(--ink);min-height:100vh;-webkit-font-smoothing:antialiased;
+    background:
+      radial-gradient(1100px 560px at 82% -10%,#e6fbef 0%,rgba(230,251,239,0) 55%),
+      radial-gradient(900px 480px at -8% 0%,#eaf4ff 0%,rgba(234,244,255,0) 52%),
+      linear-gradient(180deg,var(--bg) 0%,var(--bg2) 100%);
+    background-attachment:fixed;
+  }
+  .wrap{max-width:640px;margin:0 auto;padding:16px 16px 48px;}
+
+  .top{display:flex;align-items:center;gap:10px;margin-bottom:14px;}
+  .home{display:flex;align-items:center;gap:7px;text-decoration:none;background:var(--card);
+    border:1px solid var(--line);border-radius:14px;padding:9px 13px;font-weight:700;
+    font-size:14px;color:var(--ink);box-shadow:var(--shadow);}
+  .home:hover{transform:translateY(-1px);}
+  .title{font-family:var(--round);font-weight:800;font-size:19px;letter-spacing:-.01em;flex:1;text-align:center;}
+  .ibtn{border:1px solid var(--line);background:var(--card);border-radius:14px;padding:9px 12px;
+    font-size:14px;font-weight:700;color:var(--ink);cursor:pointer;box-shadow:var(--shadow);font-family:var(--font);}
+  .ibtn:hover{transform:translateY(-1px);}
+  .ibtn:active{transform:translateY(0);}
+
+  .rankbar{background:var(--card);border:1px solid var(--line);border-radius:18px;
+    padding:12px 15px;box-shadow:var(--shadow);margin-bottom:12px;}
+  .rankrow{display:flex;align-items:center;gap:11px;}
+  .rankemj{font-size:30px;line-height:1;}
+  .ranktxt{flex:1;min-width:0;}
+  .rankname{font-family:var(--round);font-weight:800;font-size:15px;}
+  .ranksub{color:var(--muted);font-size:12px;margin-top:1px;}
+  .wallet{display:flex;align-items:center;gap:6px;background:linear-gradient(150deg,#fff6df,#ffe9b8);
+    border:1px solid #f2d488;border-radius:13px;padding:7px 12px;font-family:var(--round);font-weight:800;
+    font-size:16px;color:#8a5b12;white-space:nowrap;}
+  .xpbar{height:9px;border-radius:99px;background:#e9edf6;overflow:hidden;margin-top:9px;}
+  .xpfill{height:100%;border-radius:99px;background:linear-gradient(90deg,var(--mathe),var(--mathe2));width:0;transition:width .5s cubic-bezier(.3,1,.4,1);}
+
+  .chips{display:flex;gap:9px;margin-bottom:14px;}
+  .chip{flex:1;background:var(--card);border:1px solid var(--line);border-radius:15px;padding:9px 6px;text-align:center;box-shadow:var(--shadow);}
+  .chip .big{font-family:var(--round);font-weight:800;font-size:18px;line-height:1;}
+  .chip .lbl{color:var(--muted);font-size:11px;margin-top:3px;}
+
+  .stage{background:var(--card);border:1px solid var(--line);border-radius:24px;padding:18px 17px 20px;box-shadow:var(--shadow);}
+  .cust{display:flex;align-items:flex-start;gap:11px;margin-bottom:14px;}
+  .avatarC{width:52px;height:52px;border-radius:16px;flex:none;display:grid;place-items:center;font-size:30px;background:linear-gradient(160deg,#fef3d7,#ffe1b0);}
+  .bubble{position:relative;background:#f2f6ff;border:1px solid #dfe7fb;border-radius:16px;padding:11px 14px;font-size:15.5px;line-height:1.35;font-weight:600;color:#25304a;flex:1;}
+  .bubble::before{content:"";position:absolute;left:-7px;top:16px;width:12px;height:12px;background:#f2f6ff;border-left:1px solid #dfe7fb;border-bottom:1px solid #dfe7fb;transform:rotate(45deg);}
+  .work{display:grid;place-items:center;margin:6px 0 16px;}
+  .work svg{max-width:320px;width:100%;height:auto;}
+  .goods{display:flex;flex-wrap:wrap;gap:11px;justify-content:center;margin:6px 0 8px;}
+  .good{position:relative;background:#f8fafc;border:2px solid var(--line);border-radius:18px;padding:12px 10px 10px;min-width:96px;text-align:center;cursor:pointer;transition:transform .12s,border-color .12s;font-family:var(--round);}
+  .good:hover{transform:translateY(-2px);border-color:#cbd5e8;}
+  .good .ge{font-size:34px;line-height:1;}
+  .good .gw{font-weight:800;font-size:16px;margin-top:5px;}
+  .good.picked{border-color:var(--mathe);background:#e9fbf2;opacity:.65;pointer-events:none;}
+  .good .num{position:absolute;top:-9px;right:-9px;width:24px;height:24px;border-radius:50%;background:var(--mathe);color:#fff;font-weight:800;font-size:13px;display:grid;place-items:center;box-shadow:0 3px 8px rgba(16,185,129,.4);}
+  .orderhint{text-align:center;color:var(--muted);font-size:13px;margin:2px 0 12px;}
+  .opts{display:grid;grid-template-columns:1fr 1fr;gap:11px;}
+  .opt{border:2px solid var(--line);background:#fff;border-radius:16px;padding:15px 10px;font-family:var(--round);font-weight:800;font-size:19px;color:var(--ink);cursor:pointer;transition:transform .1s,border-color .12s,background .12s;}
+  .opt:hover{transform:translateY(-2px);border-color:#cbd5e8;}
+  .opt.right{border-color:var(--mathe);background:#e9fbf2;color:var(--mathe2);}
+  .opt.wrong{border-color:var(--wrong);background:#fdeceb;color:var(--wrong);}
+  .opt:disabled{cursor:default;}
+  .fb{margin-top:15px;border-radius:16px;padding:13px 15px;font-size:14.5px;line-height:1.4;display:none;animation:rise .25s ease;}
+  .fb.show{display:block;}
+  .fb.ok{background:#e9fbf2;border:1px solid #b6ecd2;color:#0c7a53;}
+  .fb.no{background:#fdeceb;border:1px solid #f6c9c6;color:#a4322b;}
+  .fb b{font-weight:800;}
+  @keyframes rise{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:translateY(0);}}
+  .next{margin-top:13px;width:100%;border:none;border-radius:15px;padding:14px;font-family:var(--round);font-weight:800;font-size:16px;color:#fff;cursor:pointer;background:linear-gradient(150deg,var(--mathe),var(--mathe2));display:none;}
+  .next.show{display:block;}
+
+  .panel{background:var(--card);border:1px solid var(--line);border-radius:24px;padding:26px 22px;box-shadow:var(--shadow);text-align:center;}
+  .panel .hero{font-size:56px;}
+  .panel h2{font-family:var(--round);font-weight:800;font-size:23px;margin:8px 0 4px;}
+  .panel p{color:var(--muted);font-size:15px;margin:0 0 18px;line-height:1.45;}
+  .big-btn{border:none;border-radius:17px;padding:15px 22px;font-family:var(--round);font-weight:800;font-size:17px;color:#fff;cursor:pointer;background:linear-gradient(150deg,var(--mathe),var(--mathe2));box-shadow:0 10px 24px rgba(16,185,129,.34);width:100%;}
+  .big-btn:hover{transform:translateY(-2px);}
+  .ghost-btn{border:1px solid var(--line);background:var(--card);border-radius:15px;padding:13px;font-family:var(--round);font-weight:800;font-size:15px;color:var(--ink);cursor:pointer;width:100%;margin-top:10px;}
+  .summary{display:flex;gap:10px;margin:4px 0 20px;}
+  .sbox{flex:1;background:#f6f9fc;border:1px solid var(--line);border-radius:16px;padding:13px 6px;}
+  .sbox .sv{font-family:var(--round);font-weight:800;font-size:22px;}
+  .sbox .sl{color:var(--muted);font-size:12px;margin-top:3px;}
+  .hidden{display:none;}
+
+  /* MARKT (begehbar, 11x7) */
+  .market{position:relative;width:100%;aspect-ratio:11/7;border-radius:20px;overflow:hidden;
+    border:1px solid #d7e2d5;box-shadow:var(--shadow);
+    background:repeating-linear-gradient(0deg,#f6efe1 0 calc(100%/7),#f1e8d6 calc(100%/7) calc(200%/7)),#f6efe1;
+    background-blend-mode:multiply;touch-action:none;user-select:none;}
+  .market .grid{position:absolute;inset:0;background-image:
+    linear-gradient(90deg,rgba(160,140,100,.12) 1px,transparent 1px),
+    linear-gradient(0deg,rgba(160,140,100,.12) 1px,transparent 1px);
+    background-size:calc(100%/11) calc(100%/7);}
+  .tile{position:absolute;display:grid;place-items:center;font-size:clamp(15px,4.4vw,28px);
+    width:calc(100%/11);height:calc(100%/7);line-height:1;pointer-events:none;}
+  .tile.fixture{filter:drop-shadow(0 3px 4px rgba(0,0,0,.12));}
+  .tile.player{transition:left .12s ease,top .12s ease;z-index:5;}
+  .tile .lvl{position:absolute;bottom:1px;right:2px;font-family:var(--round);font-weight:800;font-size:8px;color:#fff;background:var(--mathe);border-radius:5px;padding:0 3px;line-height:12px;}
+  .marketInfo{min-height:20px;text-align:center;color:var(--muted);font-size:13px;margin:8px 0 4px;font-weight:600;}
+  .marketInfo b{color:var(--ink);}
+  .dpad{display:grid;grid-template-columns:repeat(3,48px);grid-template-rows:repeat(3,48px);gap:6px;justify-content:center;margin:6px auto 4px;}
+  .dbtn{border:1px solid var(--line);background:var(--card);border-radius:12px;font-size:20px;cursor:pointer;box-shadow:var(--shadow);display:grid;place-items:center;color:var(--ink);}
+  .dbtn:active{transform:scale(.94);background:#eef7f1;}
+  .dbtn.empty{visibility:hidden;}
+  .du{grid-column:2;grid-row:1;} .dl{grid-column:1;grid-row:2;}
+  .dr{grid-column:3;grid-row:2;} .dd{grid-column:2;grid-row:3;}
+  .mbtns{display:flex;gap:10px;margin-top:10px;}
+  .mbtns .big-btn{flex:1;}
+  .mbtns .shopBtn{background:linear-gradient(150deg,var(--gold),var(--gold2));box-shadow:0 10px 24px rgba(231,154,26,.34);}
+
+  .shopcat{font-family:var(--round);font-weight:800;font-size:14px;color:var(--muted);margin:14px 2px 8px;}
+  .item{display:flex;align-items:center;gap:12px;background:var(--card);border:1px solid var(--line);border-radius:18px;padding:12px 13px;box-shadow:var(--shadow);margin-bottom:10px;}
+  .item .iemj{font-size:30px;width:46px;height:46px;flex:none;display:grid;place-items:center;border-radius:13px;background:#f4f7fb;}
+  .item .ibody{flex:1;min-width:0;}
+  .item .iname{font-family:var(--round);font-weight:800;font-size:15px;}
+  .item .idesc{color:var(--muted);font-size:12.5px;margin-top:1px;line-height:1.3;}
+  .buy{border:none;border-radius:13px;padding:10px 14px;font-family:var(--round);font-weight:800;font-size:14px;color:#fff;cursor:pointer;white-space:nowrap;flex:none;background:linear-gradient(150deg,var(--gold),var(--gold2));box-shadow:0 6px 14px rgba(231,154,26,.32);}
+  .buy:disabled{background:#dfe3ec;color:#9aa1b2;box-shadow:none;cursor:default;}
+  .buy.owned{background:#e9fbf2;color:var(--mathe2);box-shadow:none;cursor:default;}
+  .buy.maxed{background:#eef2f8;color:var(--muted);box-shadow:none;cursor:default;}
+
+  canvas#confetti{position:fixed;inset:0;pointer-events:none;z-index:60;}
+  @media(max-width:420px){ .opt{font-size:17px;} .title{font-size:17px;} .dpad{grid-template-columns:repeat(3,44px);grid-template-rows:repeat(3,44px);} }
+  @media(prefers-reduced-motion:reduce){ *{animation:none!important;transition:none!important;} }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="top">
+    <a class="home" id="homeBtn" href="index.html">🏠 <span>Startseite</span></a>
+    <div class="title">⚖️ Wiege-Meister</div>
+    <button class="ibtn" id="speakBtn" title="Vorlesen">🗣️</button>
+    <button class="ibtn" id="soundBtn" title="Ton an/aus">🔊</button>
+  </div>
+
+  <section id="startScreen" class="panel">
+    <div class="hero">🏪</div>
+    <h2>Willkommen, Markt-Chef!</h2>
+    <p>Bediene Kunden, verdiene <b>Taler</b> 🪙 und bau dir deinen eigenen Markt:<br>größere Kasse, Mitarbeiter, neue Stände und Deko!</p>
+    <button class="big-btn" id="openBtn">Markt betreten 🏪</button>
+    <div id="startRank" class="orderhint" style="margin-top:16px;"></div>
+  </section>
+
+  <section id="marketScreen" class="hidden">
+    <div class="rankbar">
+      <div class="rankrow">
+        <div class="rankemj" id="mRankEmj">🧺</div>
+        <div class="ranktxt">
+          <div class="rankname" id="mRankName">Markt-Lehrling</div>
+          <div class="ranksub" id="mIncome">+1 🪙 pro Kunde</div>
+        </div>
+        <div class="wallet">🪙 <span id="mTaler">0</span></div>
+      </div>
+    </div>
+    <div class="market" id="market"><div class="grid"></div></div>
+    <div class="marketInfo" id="marketInfo">Lauf mit den Pfeilen oder Wischen durch deinen Markt!</div>
+    <div class="dpad">
+      <button class="dbtn du" data-dir="up">▲</button>
+      <button class="dbtn dl" data-dir="left">◀</button>
+      <button class="dbtn empty"></button>
+      <button class="dbtn dr" data-dir="right">▶</button>
+      <button class="dbtn dd" data-dir="down">▼</button>
+    </div>
+    <div class="mbtns">
+      <button class="big-btn" id="serveBtn">🛒 Kunden bedienen</button>
+      <button class="big-btn shopBtn" id="shopBtn">🏪 Shop</button>
+    </div>
+  </section>
+
+  <section id="shopScreen" class="hidden">
+    <div class="rankbar">
+      <div class="rankrow">
+        <div class="rankemj">🏪</div>
+        <div class="ranktxt"><div class="rankname">Markt-Shop</div><div class="ranksub" id="sIncome">+1 🪙 pro Kunde</div></div>
+        <div class="wallet">🪙 <span id="sTaler">0</span></div>
+      </div>
+    </div>
+    <div id="shopBody"></div>
+    <button class="ghost-btn" id="backToMarket">◀ Zurück zum Markt</button>
+  </section>
+
+  <section id="playScreen" class="hidden">
+    <div class="rankbar">
+      <div class="rankrow">
+        <div class="rankemj" id="rankEmj">🧺</div>
+        <div class="ranktxt"><div class="rankname" id="rankName">Markt-Lehrling</div><div class="ranksub" id="rankSub">0 XP</div></div>
+        <div class="wallet">🪙 <span id="pTaler">0</span></div>
+      </div>
+      <div class="xpbar"><div class="xpfill" id="xpFill"></div></div>
+    </div>
+    <div class="chips">
+      <div class="chip"><div class="big" id="streakVal">0</div><div class="lbl">🔥 Serie</div></div>
+      <div class="chip"><div class="big" id="earnVal">+0</div><div class="lbl">🪙 heute</div></div>
+      <div class="chip"><div class="big" id="custVal">1/8</div><div class="lbl">👥 Kunde</div></div>
+    </div>
+    <div class="stage">
+      <div class="cust">
+        <div class="avatarC" id="avatar">🧑</div>
+        <div class="bubble" id="bubble">…</div>
+      </div>
+      <div class="work" id="work"></div>
+      <div class="opts" id="opts"></div>
+      <div class="orderhint hidden" id="orderHint">Tippe der Reihe nach – vom leichtesten zum schwersten!</div>
+      <div class="fb" id="fb"></div>
+      <button class="next" id="nextBtn">Nächster Kunde →</button>
+    </div>
+  </section>
+
+  <section id="endScreen" class="hidden panel">
+    <div class="hero" id="endHero">🏅</div>
+    <h2 id="endTitle">Markttag geschafft!</h2>
+    <p id="endText"></p>
+    <div class="summary">
+      <div class="sbox"><div class="sv" id="endRight">0</div><div class="sl">✅ richtig</div></div>
+      <div class="sbox"><div class="sv" id="endTaler">+0</div><div class="sl">🪙 verdient</div></div>
+      <div class="sbox"><div class="sv" id="endStreak">0</div><div class="sl">🔥 beste Serie</div></div>
+    </div>
+    <button class="big-btn" id="toMarketBtn">🏪 Zurück zum Markt</button>
+    <button class="ghost-btn" id="againBtn">🛒 Gleich weiter bedienen</button>
+    <button class="ghost-btn" id="trainBtn">🔁 Fehler üben (<span id="mistCount">0</span>)</button>
+  </section>
+</div>
+
+<canvas id="confetti"></canvas>
+
+<script>
+(function(){
+  "use strict";
+
+  /* HEILIG (bestehend): wiege-xp, wiege-best, wiege-served, wiege-mistakes, wiege-sound, wiege-games
+     NEU: wiege-taler, wiege-shop, wiege-pos  (Sync sichert alle Keys automatisch) */
+  var LS={ xp:"wiege-xp", best:"wiege-best", served:"wiege-served", mistakes:"wiege-mistakes",
+    sound:"wiege-sound", games:"wiege-games", taler:"wiege-taler", shop:"wiege-shop", pos:"wiege-pos" };
+  function gi(k,d){ try{var v=localStorage.getItem(k);return v==null?d:v;}catch(e){return d;} }
+  function si(k,v){ try{localStorage.setItem(k,v);}catch(e){} }
+  function num(k){ var n=parseInt(gi(k,"0"),10); return isNaN(n)?0:n; }
+  function getMist(){ try{var a=JSON.parse(gi(LS.mistakes,"[]"));return Array.isArray(a)?a:[];}catch(e){return [];} }
+  function setMist(a){ si(LS.mistakes, JSON.stringify(a.slice(-20))); }
+
+  var wallet=num(LS.taler);
+  function loadShop(){
+    var d={kasse:1,mitarbeiter:0,stalls:[],deko:[]};
+    try{ var s=JSON.parse(gi(LS.shop,"null")); if(s&&typeof s==="object"){ d.kasse=s.kasse||1; d.mitarbeiter=s.mitarbeiter||0; d.stalls=Array.isArray(s.stalls)?s.stalls:[]; d.deko=Array.isArray(s.deko)?s.deko:[]; } }catch(e){}
+    return d;
+  }
+  var shop=loadShop();
+  function saveShop(){ si(LS.shop, JSON.stringify(shop)); }
+  function saveWallet(){ si(LS.taler, String(wallet)); }
+  var BONUS=2; /* jede gekaufte Sache bringt +2 Taler pro Kunde */
+  function talerPerSale(){ return 1 + BONUS*((shop.kasse-1) + shop.mitarbeiter + shop.stalls.length + shop.deko.length); }
+
+  var hubUrl=gi("hub-url","index.html");
+  document.getElementById("homeBtn").href=hubUrl;
+
+  var RANKS=[
+    {min:0,name:"Markt-Lehrling",emj:"🧺"},{min:60,name:"Markt-Helfer",emj:"🍎"},
+    {min:150,name:"Wiege-Kenner",emj:"⚖️"},{min:280,name:"Waagen-Profi",emj:"🎯"},
+    {min:450,name:"Markt-Meister",emj:"🏅"},{min:650,name:"Gewichts-Großmeister",emj:"👑"}
+  ];
+  function rankFor(xp){ var r=RANKS[0],nx=null; for(var i=0;i<RANKS.length;i++){ if(xp>=RANKS[i].min){ r=RANKS[i]; nx=RANKS[i+1]||null; } } return {cur:r,next:nx}; }
+
+  var actx=null, soundOn=gi(LS.sound,"1")!=="0";
+  function tone(f,dur,delay,type,vol){ if(!soundOn) return;
+    try{ actx=actx||new (window.AudioContext||window.webkitAudioContext)();
+      var o=actx.createOscillator(),g=actx.createGain(); o.type=type||"sine"; o.frequency.value=f;
+      var t0=actx.currentTime+(delay||0); g.gain.setValueAtTime(0,t0);
+      g.gain.linearRampToValueAtTime(vol||.16,t0+.02); g.gain.exponentialRampToValueAtTime(.0001,t0+dur);
+      o.connect(g); g.connect(actx.destination); o.start(t0); o.stop(t0+dur+.02);
+    }catch(e){} }
+  function sClick(){ tone(620,.09,0,"triangle"); }
+  function sRight(){ tone(659,.14,0); tone(784,.14,.11); tone(988,.22,.22); }
+  function sWrong(){ tone(196,.22,0,"sawtooth",.12); }
+  function sCoin(){ tone(1046,.08,0,"square",.1); tone(1318,.12,.07,"square",.1); }
+  function sBuy(){ tone(784,.1,0,"square",.12); tone(1046,.1,.09,"square",.12); tone(1318,.16,.18,"square",.12); }
+  function sStep(){ tone(300,.05,0,"triangle",.06); }
+  var soundBtn=document.getElementById("soundBtn");
+  function paintSound(){ soundBtn.textContent=soundOn?"🔊":"🔈"; }
+  paintSound();
+  soundBtn.addEventListener("click",function(){ soundOn=!soundOn; si(LS.sound,soundOn?"1":"0"); paintSound(); if(soundOn) sClick(); });
+
+  document.getElementById("speakBtn").addEventListener("click",function(){
+    try{ var txt=(cur&&cur.speak)?cur.speak:"Willkommen an deinem Markt!";
+      var u=new SpeechSynthesisUtterance(txt); u.lang="de-DE"; u.rate=.96; speechSynthesis.cancel(); speechSynthesis.speak(u);
+    }catch(e){} });
+
+  function confetti(n){
+    if(window.matchMedia&&matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    var c=document.getElementById("confetti"),x=c.getContext("2d");
+    c.width=innerWidth; c.height=innerHeight;
+    var cols=["#10b981","#0ea371","#5b8cff","#f5b73c","#fb923c","#f43f5e"],P=[];
+    for(var i=0;i<(n||120);i++) P.push({x:Math.random()*c.width,y:-20-Math.random()*c.height*.4,r:5+Math.random()*6,vy:2+Math.random()*3.5,vx:-1.5+Math.random()*3,rot:Math.random()*6.28,vr:-.2+Math.random()*.4,col:cols[i%cols.length]});
+    var frames=0;(function loop(){ x.clearRect(0,0,c.width,c.height); frames++;
+      for(var i=0;i<P.length;i++){var p=P[i]; p.x+=p.vx; p.y+=p.vy; p.rot+=p.vr; p.vy+=.045;
+        x.save(); x.translate(p.x,p.y); x.rotate(p.rot); x.fillStyle=p.col; x.fillRect(-p.r/2,-p.r/2,p.r,p.r*.6); x.restore();}
+      if(frames<200) requestAnimationFrame(loop); else x.clearRect(0,0,c.width,c.height); })();
+  }
+
+  var GOODS=["🍎","🍞","🥕","🧀","🍅","🥔","🧅","🍒","🍇","🍐","🍌","🥜","🐟","🍯","🥖","🍓"];
+  var CUSTOMERS=["🧑","👩","🧓","👨","👵","🧒","👧","👦","🧑‍🌾","👩‍🍳"];
+  function pick(a){ return a[Math.floor(Math.random()*a.length)]; }
+  function shuffle(a){ a=a.slice(); for(var i=a.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1));var t=a[i];a[i]=a[j];a[j]=t;} return a; }
+
+  function gramOpts(correct,pool){
+    var vals=[correct],seen={}; seen[correct]=1; pool=shuffle(pool);
+    for(var i=0;i<pool.length&&vals.length<4;i++){ var v=pool[i]; if(v>0&&!seen[v]){ seen[v]=1; vals.push(v); } }
+    var d=10; while(vals.length<4){ var c=correct+d; if(c>0&&!seen[c]){seen[c]=1;vals.push(c);} d=(d>0?-d:(-d+10)); }
+    return shuffle(vals).map(function(v){ return {label:v+" g", correct:v===correct}; });
+  }
+  function scaleSVG(emoji,stones){
+    var chips="";
+    for(var i=0;i<stones.length;i++){ var y=150-i*19;
+      chips+='<g transform="translate(236,'+y+')"><rect x="-27" y="-8.5" width="54" height="17" rx="4" fill="#d8be92" stroke="#b6975f"/><text x="0" y="4" text-anchor="middle" font-size="11" font-weight="700" fill="#5a4527" font-family="var(--round)">'+stones[i]+' g</text></g>';
+    }
+    return '<svg viewBox="0 0 320 200" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Balkenwaage im Gleichgewicht">'
+      +'<rect x="118" y="182" width="84" height="12" rx="6" fill="#9a7b52"/>'
+      +'<rect x="153" y="66" width="14" height="120" rx="4" fill="#b8935f"/>'
+      +'<rect x="52" y="60" width="216" height="8" rx="4" fill="#c39a63"/>'
+      +'<circle cx="160" cy="64" r="8" fill="#8a6b45"/>'
+      +'<line x1="72" y1="66" x2="72" y2="112" stroke="#8a6b45" stroke-width="2"/>'
+      +'<line x1="248" y1="66" x2="248" y2="112" stroke="#8a6b45" stroke-width="2"/>'
+      +'<path d="M40 112 Q72 138 104 112" fill="none" stroke="#8a6b45" stroke-width="2.5"/>'
+      +'<ellipse cx="72" cy="112" rx="34" ry="8" fill="#e7d3ad" stroke="#b6975f" stroke-width="1.5"/>'
+      +'<text x="72" y="108" text-anchor="middle" font-size="34">'+emoji+'</text>'
+      +'<path d="M216 112 Q248 138 280 112" fill="none" stroke="#8a6b45" stroke-width="2.5"/>'
+      +'<ellipse cx="248" cy="112" rx="34" ry="8" fill="#e7d3ad" stroke="#b6975f" stroke-width="1.5"/>'
+      +chips+'</svg>';
+  }
+
+  /* ===== Fragen-Generatoren (unverändert, getestet) ===== */
+  function genWaage(){
+    var vals=[500,200,100,50,20,10],n=2+Math.floor(Math.random()*3),st=[];
+    for(var i=0;i<n;i++) st.push(pick(vals)); st.sort(function(a,b){return b-a;});
+    var total=st.reduce(function(a,b){return a+b;},0),g=pick(GOODS);
+    var pool=[total+10,total-10,total+st[0],total-st[st.length-1],total+20,total-st[0]];
+    return {kind:"waage",bubble:"Wie schwer ist meine Ware "+g+" ? Die Waage ist im Gleichgewicht!",
+      speak:"Wie schwer ist meine Ware? Die Waage ist im Gleichgewicht.",work:scaleSVG(g,st),
+      mode:"choice",options:gramOpts(total,pool),
+      explain:"Zähl die Gewichtssteine zusammen: "+st.join(" + ")+" = <b>"+total+" g</b>."};
+  }
+  function genUmrechnen(){
+    var frac=[{l:"¼ kg",g:250},{l:"½ kg",g:500},{l:"¾ kg",g:750},{l:"1 kg",g:1000},{l:"1½ kg",g:1500},{l:"2 kg",g:2000}];
+    var g=pick(GOODS),r=Math.random();
+    if(r<0.4){ var f=pick(frac); var pool=[f.g+100,f.g-100,f.g+250,f.g-250,f.g*2,Math.round(f.g/2)];
+      return {kind:"umrechnen",bubble:"Ich möchte "+f.l+" "+g+" bitte. Welcher Beutel ist das?",
+        speak:"Ich möchte "+f.l+". Welcher Beutel ist das?",work:'<div style="font-size:60px">'+g+'</div>',
+        mode:"choice",options:gramOpts(f.g,pool),
+        explain:"<b>"+f.l+" = "+f.g+" g</b>. Merke: ½ kg = 500 g, ¼ kg = 250 g, 1 kg = 1000 g."};
+    } else if(r<0.7){ var f2=pick(frac.filter(function(x){return x.g%250===0;}));
+      var opts=shuffle([f2,pick(frac),pick(frac),pick(frac)]),used={},list=[];
+      opts.forEach(function(o){ if(!used[o.l]){used[o.l]=1;list.push(o);} });
+      while(list.length<4){ var e=pick(frac); if(!used[e.l]){used[e.l]=1;list.push(e);} } list=shuffle(list);
+      return {kind:"umrechnen",bubble:"Dieser Beutel "+g+" wiegt "+f2.g+" g. Wie viel kg ist das?",
+        speak:"Dieser Beutel wiegt "+f2.g+" Gramm. Wie viel Kilogramm ist das?",
+        work:'<div style="font-size:56px">'+g+'</div><div style="font-family:var(--round);font-weight:800;font-size:24px;margin-top:4px">'+f2.g+' g</div>',
+        mode:"choice",options:list.map(function(o){return {label:o.l,correct:o.l===f2.l};}),
+        explain:"<b>"+f2.g+" g = "+f2.l+"</b>. 1000 g sind immer 1 kg."};
+    } else { var kg=1+Math.floor(Math.random()*2),rest=[50,100,150,200,250,300,500][Math.floor(Math.random()*7)];
+      var correct=kg*1000+rest,pool2=[kg*1000+rest+100,kg*100+rest,kg*1000-rest,rest,correct+50,correct-50];
+      return {kind:"umrechnen",bubble:"Ich brauche "+kg+" kg "+rest+" g "+g+". Wie viel Gramm sind das?",
+        speak:"Ich brauche "+kg+" Kilogramm "+rest+" Gramm. Wie viel Gramm sind das?",
+        work:'<div style="font-size:56px">'+g+'</div><div style="font-family:var(--round);font-weight:800;font-size:22px;margin-top:4px">'+kg+' kg '+rest+' g</div>',
+        mode:"choice",options:gramOpts(correct,pool2),
+        explain:"<b>"+kg+" kg = "+(kg*1000)+" g</b>, plus "+rest+" g = <b>"+correct+" g</b>."};
+    }
+  }
+  function genOrdnen(){
+    var pool=[{g:50,l:"50 g"},{g:120,l:"120 g"},{g:250,l:"¼ kg"},{g:320,l:"320 g"},{g:500,l:"½ kg"},{g:600,l:"600 g"},{g:750,l:"¾ kg"},{g:1000,l:"1 kg"},{g:1020,l:"1020 g"},{g:1500,l:"1½ kg"},{g:2000,l:"2 kg"}];
+    var cnt=3+Math.floor(Math.random()*2),chosen=[],usedG={},sh=shuffle(pool);
+    for(var i=0;i<sh.length&&chosen.length<cnt;i++){ if(!usedG[sh[i].g]){usedG[sh[i].g]=1;chosen.push(sh[i]);} }
+    var em=shuffle(GOODS).slice(0,chosen.length); chosen.forEach(function(c,i){ c.emj=em[i]; });
+    var sorted=chosen.slice().sort(function(a,b){return a.g-b.g;});
+    return {kind:"ordnen",bubble:"Leg meine Sachen bitte der Größe nach hin – vom leichtesten zum schwersten!",
+      speak:"Ordne die Waren der Größe nach, vom leichtesten zum schwersten.",work:"",mode:"order",
+      orderItems:shuffle(chosen).map(function(c){return {emj:c.emj,label:c.l,g:c.g};}),
+      target:sorted.map(function(c){return c.g;}),
+      explain:"Richtig sortiert: "+sorted.map(function(c){return c.l;}).join(" → ")+"."};
+  }
+  function roundTen(n){ return Math.round(n/10)*10; }
+  function genUeberschlag(){
+    var r=Math.random();
+    if(r<0.55){ var a=13+Math.floor(Math.random()*36)*10+Math.floor(Math.random()*10);
+      var b=13+Math.floor(Math.random()*36)*10+Math.floor(Math.random()*10);
+      var est=roundTen(a)+roundTen(b),exact=a+b;
+      var pool=[exact,est+10,est-10,est+20,est-20,est+30];
+      return {kind:"ueberschlag",bubble:"Schätz schlau: Wie viel ist ungefähr "+a+" g + "+b+" g?",
+        speak:"Schätze schlau. Wie viel ist ungefähr "+a+" Gramm plus "+b+" Gramm?",
+        work:'<div style="font-family:var(--round);font-weight:800;font-size:30px">'+a+' g&nbsp;+&nbsp;'+b+' g</div>',
+        mode:"choice",options:gramOpts(est,pool),
+        explain:"Runde jede Zahl: "+a+"≈"+roundTen(a)+", "+b+"≈"+roundTen(b)+". Zusammen ≈ <b>"+est+" g</b>."};
+    } else { var animals=[["🐹","Hamster"],["🐰","Kaninchen"],["🐢","Schildkröte"],["🐟","Fisch"],["🐦","Vogel"]];
+      var an=pick(animals),per=5+Math.floor(Math.random()*5),correct=per*7;
+      var pool2=[per*6,per*8,per*5,per*7+7,per*7-7,per+7];
+      return {kind:"ueberschlag",bubble:"Mein "+an[1]+" frisst täglich ungefähr "+per+" g. Wie viel in einer Woche?",
+        speak:"Mein "+an[1]+" frisst täglich ungefähr "+per+" Gramm. Wie viel frisst es in einer Woche?",
+        work:'<div style="font-size:52px">'+an[0]+'</div><div style="font-family:var(--round);font-weight:800;font-size:22px;margin-top:2px">'+per+' g pro Tag</div>',
+        mode:"choice",options:gramOpts(correct,pool2),
+        explain:"Eine Woche hat 7 Tage: "+per+" g · 7 = <b>"+correct+" g</b>."};
+    }
+  }
+  var GENS=[genWaage,genUmrechnen,genOrdnen,genUeberschlag];
+  function newQuestion(){ return pick(GENS)(); }
+
+  /* ================= SHOP-Daten (GRÖSSER) ================= */
+  var KASSE_MAX=10, KASSE_PRICES=[20,40,70,110,160,230,320,430,560]; /* Level 1->2 ... 9->10 */
+  var MITA_MAX=6, MITA_PRICES=[50,110,190,300,450,650];
+  var MITA_EMJ=["🧑‍🌾","👩‍🍳","🧑‍🍳","👨‍🌾","👩‍🌾","🧑‍🔧"];
+  var STALLS=[
+    {id:"obst",name:"Obststand",emj:"🍎",price:30},
+    {id:"gemuese",name:"Gemüsestand",emj:"🥕",price:60},
+    {id:"kaese",name:"Käsetheke",emj:"🧀",price:100},
+    {id:"baecker",name:"Bäckerei",emj:"🍞",price:150},
+    {id:"fisch",name:"Fischtheke",emj:"🐟",price:220},
+    {id:"blumen",name:"Blumenstand",emj:"🌸",price:300},
+    {id:"honig",name:"Honig-Ecke",emj:"🍯",price:400},
+    {id:"suess",name:"Süßwaren",emj:"🍫",price:520},
+    {id:"getraenke",name:"Getränke-Stand",emj:"🧃",price:640},
+    {id:"eis",name:"Eisstand",emj:"🍦",price:780},
+    {id:"metzger",name:"Metzgerei",emj:"🥩",price:950},
+    {id:"kraeuter",name:"Kräuter-Ecke",emj:"🌿",price:1150}
+  ];
+  var DEKO=[
+    {id:"zelt",name:"Marktzelt",emj:"🎪",price:700},
+    {id:"brunnen",name:"Springbrunnen",emj:"⛲",price:900},
+    {id:"baum",name:"Marktbaum",emj:"🌳",price:1100},
+    {id:"ballons",name:"Bunte Ballons",emj:"🎈",price:1300}
+  ];
+  function byId(list,id){ for(var i=0;i<list.length;i++) if(list[i].id===id) return list[i]; return null; }
+
+  /* ================= MARKT (begehbar 11x7) ================= */
+  var COLS=11, ROWS=7, KASSE_POS=[4,6];
+  function marketSpots(){ /* freie, gut verteilte Plätze auf geraden Zellen (Gassen bleiben frei) */
+    var spots=[];
+    for(var r=ROWS-1;r>=0;r-=2){ for(var c=0;c<COLS;c+=2){ if(c===KASSE_POS[0]&&r===KASSE_POS[1]) continue; spots.push([c,r]); } }
+    return spots;
+  }
+  var player={c:5,r:6};
+  (function(){ try{var p=JSON.parse(gi(LS.pos,"null")); if(p&&typeof p.c==="number"&&typeof p.r==="number"){ player.c=Math.max(0,Math.min(COLS-1,p.c)); player.r=Math.max(0,Math.min(ROWS-1,p.r)); } }catch(e){} })();
+
+  var marketEl=document.getElementById("market");
+  var marketInfo=document.getElementById("marketInfo");
+  var occupied={};
+
+  function kasseEmoji(){ return shop.kasse>=8?"🏢":shop.kasse>=6?"🏬":shop.kasse>=4?"🏪":"🛒"; }
+
+  function buildFixtures(){
+    occupied={};
+    var olds=marketEl.querySelectorAll(".tile.fixture"); for(var i=0;i<olds.length;i++) olds[i].remove();
+    function place(c,r,emj,label,lvl){
+      occupied[c+","+r]=label;
+      var d=document.createElement("div"); d.className="tile fixture";
+      d.style.left=(c*100/COLS)+"%"; d.style.top=(r*100/ROWS)+"%";
+      d.innerHTML=emj+(lvl?('<span class="lvl">'+lvl+'</span>'):"");
+      marketEl.appendChild(d);
+    }
+    place(KASSE_POS[0],KASSE_POS[1],kasseEmoji(),"Kasse (Stufe "+shop.kasse+")","L"+shop.kasse);
+    var spots=marketSpots(),si2=0;
+    shop.stalls.forEach(function(id){ if(si2<spots.length){ var s=byId(STALLS,id); if(s){ place(spots[si2][0],spots[si2][1],s.emj,s.name); si2++; } } });
+    for(var m=0;m<shop.mitarbeiter;m++){ if(si2<spots.length){ place(spots[si2][0],spots[si2][1],MITA_EMJ[m%MITA_EMJ.length],"Mitarbeiter"); si2++; } }
+    shop.deko.forEach(function(id){ if(si2<spots.length){ var s=byId(DEKO,id); if(s){ place(spots[si2][0],spots[si2][1],s.emj,s.name); si2++; } } });
+  }
+
+  var playerEl=null;
+  function safePlayerCell(){
+    if(!occupied[player.c+","+player.r]) return;
+    var cand=[[5,6],[5,5],[3,6],[7,6],[1,6],[9,6]];
+    for(var i=0;i<cand.length;i++){ if(!occupied[cand[i][0]+","+cand[i][1]]){ player.c=cand[i][0]; player.r=cand[i][1]; return; } }
+    for(var r=ROWS-1;r>=0;r--) for(var c=0;c<COLS;c++){ if(!occupied[c+","+r]){ player.c=c; player.r=r; return; } }
+  }
+  function ensurePlayer(){
+    if(!playerEl){ playerEl=document.createElement("div"); playerEl.className="tile player"; playerEl.textContent="🧍"; marketEl.appendChild(playerEl); }
+    playerEl.style.left=(player.c*100/COLS)+"%"; playerEl.style.top=(player.r*100/ROWS)+"%";
+  }
+  function movePlayer(dx,dy){
+    var nc=player.c+dx, nr=player.r+dy;
+    if(nc<0||nc>=COLS||nr<0||nr>=ROWS) return;
+    var key=nc+","+nr;
+    if(occupied[key]){ marketInfo.innerHTML="Das ist deine <b>"+occupied[key]+"</b>."; sClick(); return; }
+    player.c=nc; player.r=nr; ensurePlayer();
+    try{ si(LS.pos, JSON.stringify({c:player.c,r:player.r})); }catch(e){}
+    sStep();
+    var near=null,dirs=[[1,0],[-1,0],[0,1],[0,-1]];
+    for(var i=0;i<dirs.length;i++){ var k=(nc+dirs[i][0])+","+(nr+dirs[i][1]); if(occupied[k]){ near=occupied[k]; break; } }
+    marketInfo.innerHTML = near ? ("Vor dir: <b>"+near+"</b>") : "Lauf weiter durch deinen Markt! 🚶";
+  }
+
+  function paintMarketHeader(){
+    var rk=rankFor(num(LS.xp));
+    document.getElementById("mRankEmj").textContent=rk.cur.emj;
+    document.getElementById("mRankName").textContent=rk.cur.name;
+    document.getElementById("mIncome").textContent="+"+talerPerSale()+" 🪙 pro Kunde";
+    document.getElementById("mTaler").textContent=wallet;
+  }
+  function renderMarket(){ buildFixtures(); safePlayerCell(); ensurePlayer(); paintMarketHeader(); }
+
+  document.querySelectorAll(".dbtn[data-dir]").forEach(function(b){
+    b.addEventListener("click",function(){ var d=b.getAttribute("data-dir");
+      movePlayer(d==="left"?-1:d==="right"?1:0, d==="up"?-1:d==="down"?1:0); });
+  });
+  document.addEventListener("keydown",function(e){
+    if(document.getElementById("marketScreen").classList.contains("hidden")) return;
+    var k=e.key;
+    if(k==="ArrowLeft"||k==="a"){ movePlayer(-1,0); e.preventDefault(); }
+    else if(k==="ArrowRight"||k==="d"){ movePlayer(1,0); e.preventDefault(); }
+    else if(k==="ArrowUp"||k==="w"){ movePlayer(0,-1); e.preventDefault(); }
+    else if(k==="ArrowDown"||k==="s"){ movePlayer(0,1); e.preventDefault(); }
+  });
+  var tsx=0,tsy=0;
+  marketEl.addEventListener("touchstart",function(e){ var t=e.changedTouches[0]; tsx=t.clientX; tsy=t.clientY; },{passive:true});
+  marketEl.addEventListener("touchend",function(e){ var t=e.changedTouches[0]; var dx=t.clientX-tsx, dy=t.clientY-tsy;
+    if(Math.abs(dx)<18&&Math.abs(dy)<18) return;
+    if(Math.abs(dx)>Math.abs(dy)) movePlayer(dx>0?1:-1,0); else movePlayer(0,dy>0?1:-1);
+  },{passive:true});
+
+  /* ================= SHOP-Screen ================= */
+  function shopHeader(){
+    document.getElementById("sTaler").textContent=wallet;
+    document.getElementById("sIncome").textContent="+"+talerPerSale()+" 🪙 pro Kunde";
+  }
+  function itemHTML(emj,name,desc,btn){
+    return '<div class="item"><div class="iemj">'+emj+'</div><div class="ibody"><div class="iname">'+name+'</div><div class="idesc">'+desc+'</div></div>'+btn+'</div>';
+  }
+  function renderShop(){
+    shopHeader();
+    var body=document.getElementById("shopBody"),h="";
+    /* Kasse */
+    h+='<div class="shopcat">🛒 Kasse aufrüsten</div>';
+    if(shop.kasse>=KASSE_MAX){ h+=itemHTML("🏢","Kasse Stufe "+shop.kasse,"Voll ausgebaut – beste Kasse am Markt! 🎉",'<button class="buy maxed" disabled>MAX</button>'); }
+    else { var kp=KASSE_PRICES[shop.kasse-1];
+      h+=itemHTML(kasseEmoji(),"Kasse Stufe "+shop.kasse+" → "+(shop.kasse+1),"Bringt <b>+2 🪙</b> pro Kunde. Größere Kasse!",
+        '<button class="buy" data-buy="kasse" '+(wallet<kp?"disabled":"")+'>'+kp+' 🪙</button>'); }
+    /* Mitarbeiter */
+    h+='<div class="shopcat">🧑‍🌾 Mitarbeiter einstellen</div>';
+    if(shop.mitarbeiter>=MITA_MAX){ h+=itemHTML("👥","Team komplett ("+shop.mitarbeiter+")","Alle Kassen besetzt – super Team! 🙌",'<button class="buy maxed" disabled>MAX</button>'); }
+    else { var mp=MITA_PRICES[shop.mitarbeiter];
+      h+=itemHTML(MITA_EMJ[shop.mitarbeiter%MITA_EMJ.length],"Mitarbeiter "+(shop.mitarbeiter+1),"Bedient eine weitere Kasse: <b>+2 🪙</b> pro Kunde.",
+        '<button class="buy" data-buy="mita" '+(wallet<mp?"disabled":"")+'>'+mp+' 🪙</button>'); }
+    /* Marktstände */
+    h+='<div class="shopcat">🏬 Neue Marktstände</div>';
+    STALLS.forEach(function(s){ var owned=shop.stalls.indexOf(s.id)>=0;
+      if(owned){ h+=itemHTML(s.emj,s.name,"Steht schon im Markt. <b>+2 🪙</b> pro Kunde.",'<button class="buy owned" disabled>✓ da</button>'); }
+      else { h+=itemHTML(s.emj,s.name,"Neuer Stand im Markt: <b>+2 🪙</b> pro Kunde.",'<button class="buy" data-buy="stall" data-id="'+s.id+'" '+(wallet<s.price?"disabled":"")+'>'+s.price+' 🪙</button>'); }
+    });
+    /* Deko */
+    h+='<div class="shopcat">🎪 Deko & Verschönerung</div>';
+    DEKO.forEach(function(s){ var owned=shop.deko.indexOf(s.id)>=0;
+      if(owned){ h+=itemHTML(s.emj,s.name,"Schmückt schon deinen Markt. <b>+2 🪙</b> pro Kunde.",'<button class="buy owned" disabled>✓ da</button>'); }
+      else { h+=itemHTML(s.emj,s.name,"Macht den Markt schön: <b>+2 🪙</b> pro Kunde.",'<button class="buy" data-buy="deko" data-id="'+s.id+'" '+(wallet<s.price?"disabled":"")+'>'+s.price+' 🪙</button>'); }
+    });
+    body.innerHTML=h;
+
+    body.querySelectorAll(".buy[data-buy]").forEach(function(btn){
+      btn.addEventListener("click",function(){
+        var kind=btn.getAttribute("data-buy");
+        if(kind==="kasse"&&shop.kasse<KASSE_MAX){ var p=KASSE_PRICES[shop.kasse-1]; if(wallet>=p){ wallet-=p; shop.kasse++; afterBuy(); } }
+        else if(kind==="mita"&&shop.mitarbeiter<MITA_MAX){ var p2=MITA_PRICES[shop.mitarbeiter]; if(wallet>=p2){ wallet-=p2; shop.mitarbeiter++; afterBuy(); } }
+        else if(kind==="stall"){ var id=btn.getAttribute("data-id"),s=byId(STALLS,id); if(s&&shop.stalls.indexOf(id)<0&&wallet>=s.price){ wallet-=s.price; shop.stalls.push(id); afterBuy(); } }
+        else if(kind==="deko"){ var id2=btn.getAttribute("data-id"),s2=byId(DEKO,id2); if(s2&&shop.deko.indexOf(id2)<0&&wallet>=s2.price){ wallet-=s2.price; shop.deko.push(id2); afterBuy(); } }
+      });
+    });
+  }
+  function afterBuy(){ saveWallet(); saveShop(); sBuy(); confetti(70); renderShop(); }
+
+  /* ================= Spiel-Ablauf ================= */
+  var DAY=8;
+  var cur=null, idx=0, dayRight=0, dayTaler=0, dayXp=0, streak=0;
+  var trainQueue=null;
+
+  var el={
+    start:document.getElementById("startScreen"), market:document.getElementById("marketScreen"),
+    shop:document.getElementById("shopScreen"), play:document.getElementById("playScreen"),
+    end:document.getElementById("endScreen"),
+    rankEmj:document.getElementById("rankEmj"), rankName:document.getElementById("rankName"),
+    rankSub:document.getElementById("rankSub"), xpFill:document.getElementById("xpFill"),
+    streak:document.getElementById("streakVal"), earn:document.getElementById("earnVal"),
+    cust:document.getElementById("custVal"), avatar:document.getElementById("avatar"),
+    bubble:document.getElementById("bubble"), work:document.getElementById("work"),
+    opts:document.getElementById("opts"), orderHint:document.getElementById("orderHint"),
+    fb:document.getElementById("fb"), next:document.getElementById("nextBtn"),
+    pTaler:document.getElementById("pTaler")
+  };
+  function show(elm){ [el.start,el.market,el.shop,el.play,el.end].forEach(function(s){ s.classList.add("hidden"); }); elm.classList.remove("hidden"); }
+
+  function paintRank(){
+    var xp=num(LS.xp),rk=rankFor(xp);
+    el.rankEmj.textContent=rk.cur.emj; el.rankName.textContent=rk.cur.name;
+    if(rk.next){ var span=rk.next.min-rk.cur.min,have=xp-rk.cur.min;
+      el.rankSub.textContent=xp+" XP · noch "+(rk.next.min-xp)+" bis "+rk.next.name;
+      el.xpFill.style.width=Math.max(4,Math.min(100,Math.round(have/span*100)))+"%";
+    } else { el.rankSub.textContent=xp+" XP · höchster Rang! 👑"; el.xpFill.style.width="100%"; }
+  }
+
+  function renderQuestion(){
+    el.fb.className="fb"; el.fb.innerHTML=""; el.next.className="next";
+    el.avatar.textContent=pick(CUSTOMERS); el.bubble.textContent=cur.bubble;
+    el.work.innerHTML=cur.work||""; el.opts.innerHTML=""; el.orderHint.className="orderhint hidden";
+    el.streak.textContent=streak; el.earn.textContent="+"+dayTaler; el.pTaler.textContent=wallet;
+    var totalN=trainQueue?trainQueue.total:DAY, curN=trainQueue?(trainQueue.total-trainQueue.list.length):(idx+1);
+    el.cust.textContent=curN+"/"+totalN; paintRank();
+    if(cur.mode==="choice"){
+      cur.options.forEach(function(o){ var b=document.createElement("button"); b.className="opt"; b.textContent=o.label;
+        b.addEventListener("click",function(){ answerChoice(b,o.correct); }); el.opts.appendChild(b); });
+    } else {
+      el.orderHint.className="orderhint"; var box=document.createElement("div"); box.className="goods"; cur._clicks=[];
+      cur.orderItems.forEach(function(it){ var d=document.createElement("div"); d.className="good";
+        d.innerHTML='<div class="ge">'+it.emj+'</div><div class="gw">'+it.label+'</div>';
+        d.addEventListener("click",function(){ pickOrder(d,it,box); }); box.appendChild(d); });
+      el.opts.appendChild(box);
+    }
+  }
+  function lockChoices(){ var bs=el.opts.querySelectorAll(".opt"); for(var i=0;i<bs.length;i++) bs[i].disabled=true; }
+  function answerChoice(btn,correct){
+    lockChoices();
+    if(correct){ btn.classList.add("right"); onCorrect(); }
+    else { btn.classList.add("wrong"); var bs=el.opts.querySelectorAll(".opt");
+      for(var i=0;i<bs.length;i++){ if(cur.options[i].correct) bs[i].classList.add("right"); } onWrong(); }
+  }
+  function pickOrder(d,it,box){
+    if(d.classList.contains("picked")) return; sClick(); cur._clicks.push(it.g);
+    var n=cur._clicks.length; d.classList.add("picked");
+    var badge=document.createElement("div"); badge.className="num"; badge.textContent=n; d.appendChild(badge);
+    if(it.g!==cur.target[n-1]){ var cards=box.querySelectorAll(".good"); for(var i=0;i<cards.length;i++) cards[i].style.pointerEvents="none"; onWrong(); return; }
+    if(n===cur.target.length){ onCorrect(); }
+  }
+
+  function onCorrect(){
+    sRight(); sCoin(); streak++;
+    var coins=talerPerSale(); wallet+=coins; dayTaler+=coins; saveWallet();
+    var gain=12+(streak>=3?4:0); dayXp+=gain; dayRight++;
+    si(LS.xp,String(num(LS.xp)+gain)); if(streak>num(LS.best)) si(LS.best,String(streak));
+    el.streak.textContent=streak; el.earn.textContent="+"+dayTaler; el.pTaler.textContent=wallet; paintRank();
+    var msgs=["Super gewogen! 🎉","Genau richtig! 💪","Klasse gerechnet!","Perfekt! ⭐","Toll drangeblieben!"];
+    el.fb.className="fb ok show";
+    el.fb.innerHTML="<b>"+pick(msgs)+"</b> +"+gain+" XP · +"+coins+" 🪙"+(streak>=3?" · 🔥 Serie "+streak+"!":"");
+    confetti(streak>=5?150:90); showNext();
+  }
+  function onWrong(){
+    sWrong(); streak=0; el.streak.textContent=0;
+    if(!trainQueue){ var m=getMist(); m.push({kind:cur.kind,bubble:cur.bubble,speak:cur.speak,work:cur.work,mode:cur.mode,options:cur.options,orderItems:cur.orderItems,target:cur.target,explain:cur.explain}); setMist(m); }
+    el.fb.className="fb no show"; el.fb.innerHTML="Fast! Kein Problem – daraus lernen wir. "+cur.explain; showNext();
+  }
+  function showNext(){ var last=trainQueue?(trainQueue.list.length<=1):(idx>=DAY-1);
+    el.next.textContent=last?"Fertig! ✓":"Nächster Kunde →"; el.next.className="next show"; }
+
+  el.next.addEventListener("click",function(){
+    sClick();
+    if(trainQueue){ trainQueue.list.shift(); if(trainQueue.list.length===0){ finishTraining(); return; } cur=trainQueue.list[0]; cur._clicks=[]; renderQuestion(); return; }
+    idx++; if(idx>=DAY){ endDay(); return; } cur=newQuestion(); renderQuestion();
+  });
+
+  function startDay(){
+    idx=0; dayRight=0; dayTaler=0; dayXp=0; streak=0; trainQueue=null;
+    cur=newQuestion(); renderQuestion(); show(el.play); window.scrollTo(0,0);
+  }
+  function endDay(){
+    si(LS.served,String(num(LS.served)+DAY)); si(LS.games,String(num(LS.games)+1));
+    var best=num(LS.best);
+    document.getElementById("endRight").textContent=dayRight+"/"+DAY;
+    document.getElementById("endTaler").textContent="+"+dayTaler;
+    document.getElementById("endStreak").textContent=best;
+    var perfect=dayRight===DAY;
+    document.getElementById("endHero").textContent=perfect?"👑":(dayRight>=6?"🏅":"🌟");
+    document.getElementById("endTitle").textContent=perfect?"Perfekter Markttag!":"Markttag geschafft!";
+    document.getElementById("endText").innerHTML=perfect
+      ? "Alle 8 Kunden zufrieden – <b>ohne Fehler!</b> Du hast <b>"+dayTaler+" 🪙</b> verdient. Ab in den Shop!"
+      : "Gut gemacht, "+dayRight+" von 8 richtig. Du hast <b>"+dayTaler+" 🪙</b> verdient – kauf dir was Schönes!";
+    var mc=getMist().length; document.getElementById("mistCount").textContent=mc;
+    document.getElementById("trainBtn").style.display=mc>0?"block":"none";
+    show(el.end); window.scrollTo(0,0); confetti(perfect?200:120);
+  }
+  function startTraining(){
+    var m=getMist(); if(!m.length) return;
+    trainQueue={list:m.slice(),total:m.length}; dayRight=0; dayTaler=0; dayXp=0; streak=0; idx=0;
+    cur=trainQueue.list[0]; cur._clicks=[]; renderQuestion(); show(el.play); window.scrollTo(0,0);
+  }
+  function finishTraining(){ setMist([]); trainQueue=null;
+    document.getElementById("endHero").textContent="🧠"; document.getElementById("endTitle").textContent="Fehler geübt – stark!";
+    document.getElementById("endRight").textContent=dayRight; document.getElementById("endTaler").textContent="+"+dayTaler;
+    document.getElementById("endStreak").textContent=num(LS.best);
+    document.getElementById("endText").innerHTML="Du hast deine schweren Aufgaben nochmal gemeistert. So bleibt nichts hängen! 💪";
+    document.getElementById("mistCount").textContent="0"; document.getElementById("trainBtn").style.display="none";
+    show(el.end); window.scrollTo(0,0); confetti(120);
+  }
+
+  function goMarket(){ renderMarket(); show(el.market); window.scrollTo(0,0); }
+  document.getElementById("openBtn").addEventListener("click",function(){ sClick(); goMarket(); });
+  document.getElementById("serveBtn").addEventListener("click",function(){ sClick(); startDay(); });
+  document.getElementById("shopBtn").addEventListener("click",function(){ sClick(); renderShop(); show(el.shop); window.scrollTo(0,0); });
+  document.getElementById("backToMarket").addEventListener("click",function(){ sClick(); goMarket(); });
+  document.getElementById("toMarketBtn").addEventListener("click",function(){ sClick(); goMarket(); });
+  document.getElementById("againBtn").addEventListener("click",function(){ sClick(); startDay(); });
+  document.getElementById("trainBtn").addEventListener("click",function(){ sClick(); startTraining(); });
+
+  (function(){ var rk=rankFor(num(LS.xp)),g=num(LS.games);
+    var t=g>0?("Du bist "+rk.cur.emj+" "+rk.cur.name+" · 🪙 "+wallet+" Taler · +"+talerPerSale()+" pro Kunde"):"Neu hier? Werde jetzt Markt-Chef!";
+    document.getElementById("startRank").textContent=t;
+  })();
+
+})();
+</script>
+</body>
+</html>
