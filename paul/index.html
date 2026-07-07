@@ -400,6 +400,9 @@
     {file:"klasse3-deutsch-praedikat-supermarkt.html", klasse:3, fach:"deutsch",
       title:"Wörter-Supermarkt", sub:"Schnapp die richtigen Wörter", icon:"🛒", type:"Spiel",
       scoreKey:"supermarkt-xp", scoreLabel:"XP"},
+    {file:"klasse3-deutsch-zeitangabe-sortierspiel.html", klasse:3, fach:"deutsch",
+      title:"Zeit-Baumeister", sub:"Sortier die Zeitangaben in die richtige Truhe", icon:"🧱", type:"Spiel",
+      scoreKey:"zeitangabe-xp", scoreLabel:"XP", added:"2026-06-22"},
 
     {file:"klasse3-hsu-strom-quiz.html", klasse:3, fach:"hsu",
       title:"Strom-Quiz", sub:"Wie funktioniert Strom?", icon:"⚡", type:"Quiz",
@@ -417,16 +420,73 @@
   ];
 
   const FACH = {
-    deutsch:{name:"Deutsch", color:"var(--deutsch)"},
-    hsu:    {name:"HSU", color:"var(--hsu)"},
-    musik:  {name:"Musik", color:"var(--musik)"},
-    spass:  {name:"Spaß", color:"var(--spass)"}
+    deutsch: {name:"Deutsch", color:"var(--deutsch)"},
+    mathe:   {name:"Mathe", color:"var(--mathe)"},
+    hsu:     {name:"HSU", color:"var(--hsu)"},
+    musik:   {name:"Musik", color:"var(--musik)"},
+    englisch:{name:"Englisch", color:"var(--englisch)"},
+    spass:   {name:"Spaß", color:"var(--spass)"}
   };
-  const FACH_ORDER = ["deutsch","hsu","musik","spass"];
+  const FACH_ORDER = ["deutsch","mathe","hsu","musik","englisch","spass"];
   const INVITES = [
     {fach:"mathe", name:"Mathe", color:"var(--mathe)", icon:"➕", text:"Lade ein Mathe-Blatt hoch – hier entsteht dein erstes Spiel."},
     {fach:"englisch", name:"Englisch", color:"var(--englisch)", icon:"🇬🇧", text:"Noch leer! Dein erstes English-Game wartet auf dich."}
   ];
+
+  // ---- Automatisch erkannte Spiele -------------------------------------
+  // Overrides: schöne Kachel-Infos für einzelne Dateien (optional, rein kosmetisch).
+  // Neue Spiele brauchen KEINEN Eintrag – dann werden Titel/Emoji aus dem Dateinamen abgeleitet.
+  const OVERRIDES = {
+    "klasse3-mathe-gewichte-wiegespiel.html":
+      {title:"Wiege-Meister", sub:"Pauls Marktstand – Gewichte wiegen", icon:"⚖️", type:"Spiel"}
+  };
+  const FACH_ICON = {deutsch:"📘", mathe:"🔢", hsu:"🌍", musik:"🎵", englisch:"🇬🇧", spass:"🎲"};
+
+  // Baut aus einem Dateinamen ein Tool-Objekt (für Spiele, die nicht in TOOLS stehen).
+  function deriveTool(file){
+    const ov = OVERRIDES[file] || {};
+    const base = file.replace(/^klasse3-/,"").replace(/\.html$/,"");
+    const parts = base.split("-");
+    let fach = parts[0];
+    if(!FACH[fach]) fach = "spass";
+    const rest = parts.slice(1);
+    const last = (rest[rest.length-1]||"").toLowerCase();
+    let type = ov.type;
+    if(!type){
+      if(last.indexOf("quiz")>=0) type = "Quiz";
+      else if(last === "3d" || base.indexOf("-3d")>=0) type = "3D-Spiel";
+      else type = "Spiel";
+    }
+    const cap = s => s ? s.charAt(0).toUpperCase()+s.slice(1) : s;
+    const title = ov.title || rest.map(cap).join(" ");
+    return {
+      file:file, klasse:3, fach:fach,
+      title:title,
+      sub: ov.sub || "Neu dazugekommen",
+      icon: ov.icon || FACH_ICON[fach] || "🎮",
+      type:type
+    };
+  }
+
+  // Liest die vom Wächter erzeugte Liste games.json und ergänzt neue Spiele automatisch.
+  function mergeDiscovered(done){
+    const known = {};
+    TOOLS.forEach(t=>known[t.file]=true);
+    fetch("games.json?t="+Date.now())
+      .then(r=>r.ok ? r.json() : null)
+      .then(list=>{
+        if(Array.isArray(list)){
+          let added = 0;
+          list.forEach(function(file){
+            if(typeof file==="string" && /^klasse3-.*\.html$/.test(file) && !known[file]){
+              TOOLS.push(deriveTool(file)); known[file]=true; added++;
+            }
+          });
+          if(added>0 && typeof done==="function") done();
+        }
+      })
+      .catch(function(){});
+  }
 
   // ---- Speicher (hub-eigene Daten) ------------------------------------
   const today = new Date(); today.setHours(0,0,0,0);
@@ -619,23 +679,28 @@
       return;   // bei Suche keine Einladungs-Sektion
     }
 
-    // Einladungs-Sektion für leere Fächer
-    const inv = document.createElement("section");
-    inv.className = "fach invite";
-    inv.innerHTML = '<div class="fachhead"><span class="dot" style="background:#cdd3e6"></span>'+
-      '<h2>Diese Fächer warten noch auf dein erstes Spiel</h2></div>';
-    const ic = document.createElement("div");
-    ic.className = "cards";
-    INVITES.forEach(function(v){
-      const d = document.createElement("div");
-      d.className = "invitecard";
-      d.style.setProperty("--c", v.color);
-      d.innerHTML = '<div class="ic">'+v.icon+'</div><div><div class="t">'+v.name+
-        '</div><div class="s">'+v.text+'</div></div>';
-      ic.appendChild(d);
+    // Einladungs-Sektion nur für Fächer, die noch KEIN Spiel haben
+    const emptyInvites = INVITES.filter(function(v){
+      return !TOOLS.some(t=>t.fach===v.fach && t.klasse===klasse);
     });
-    inv.appendChild(ic);
-    grid.appendChild(inv);
+    if(emptyInvites.length){
+      const inv = document.createElement("section");
+      inv.className = "fach invite";
+      inv.innerHTML = '<div class="fachhead"><span class="dot" style="background:#cdd3e6"></span>'+
+        '<h2>Diese Fächer warten noch auf dein erstes Spiel</h2></div>';
+      const ic = document.createElement("div");
+      ic.className = "cards";
+      emptyInvites.forEach(function(v){
+        const d = document.createElement("div");
+        d.className = "invitecard";
+        d.style.setProperty("--c", v.color);
+        d.innerHTML = '<div class="ic">'+v.icon+'</div><div><div class="t">'+v.name+
+          '</div><div class="s">'+v.text+'</div></div>';
+        ic.appendChild(d);
+      });
+      inv.appendChild(ic);
+      grid.appendChild(inv);
+    }
 
     refreshDiscovered();
   }
@@ -779,6 +844,7 @@
     "klasse3-deutsch-praedikat-springer.html":[{k:"praedikatSpringerRekord",label:"Rekord",kind:"num"}],
     "klasse3-deutsch-praedikat-springer-3d.html":[{k:"praedikat3dRekord",label:"Rekord",kind:"num"}],
     "klasse3-deutsch-praedikat-supermarkt.html":[{k:"supermarkt-xp",label:"XP",kind:"num"},{k:"supermarkt-right",label:"Wörter richtig",kind:"num"}],
+    "klasse3-deutsch-zeitangabe-sortierspiel.html":[{k:"zeitangabe-xp",label:"XP",kind:"num"},{k:"zeitangabe-beststreak",label:"Bestlauf",kind:"num"},{k:"zeitangabe-mistakes",label:"zu üben",kind:"len",warn:true}],
     "klasse3-hsu-strom-quiz.html":[{k:"strom_xp",label:"XP",kind:"num"},{k:"strom_right",label:"richtig",kind:"num"},{k:"strom_wrong_count",label:"zu üben",kind:"num",warn:true}],
     "klasse3-hsu-strom-jumpnrun.html":[{k:"strom-xp",label:"XP",kind:"num"},{k:"strom-beststreak",label:"Bestlauf",kind:"num"}],
     "klasse3-musik-beethoven-quiz.html":[{k:"beethoven-games",label:"Spiele",kind:"num"},{k:"beethoven-wrong",label:"zu üben",kind:"len",warn:true}]
@@ -841,6 +907,8 @@
 
   // ---- Start -----------------------------------------------------------
   render(parseInt(klasseSel.value,10));
+  // Automatisch erkannte Spiele nachladen und Kacheln ergänzen (ohne die index.html zu ändern)
+  mergeDiscovered(function(){ render(parseInt(klasseSel.value,10)); });
 
   if(isNewWorld){
     document.getElementById("hello").textContent = "Willkommen in deiner neuen Lernwelt, Paul! 🎉";
