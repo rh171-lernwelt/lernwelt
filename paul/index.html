@@ -866,23 +866,35 @@
     }catch(e){}
     return null;
   }
+  function lwProgress(file){
+    try{ const raw=localStorage.getItem("lw-progress:"+file); if(!raw) return null; const o=JSON.parse(raw); return (o&&typeof o==="object")?o:null; }catch(e){ return null; }
+  }
   function buildReport(){
     const body=document.getElementById("reportBody"); body.innerHTML="";
     let anyData=false;
     FACH_ORDER.forEach(function(fk){
-      const tools=TOOLS.filter(t=>t.fach===fk && REPORT[t.file]);
+      const tools=TOOLS.filter(t=>t.fach===fk && (REPORT[t.file] || lwProgress(t.file)));
       if(!tools.length) return;
       const sub=document.createElement("div"); sub.className="repsub";
       sub.innerHTML='<h4><span class="rd" style="background:'+FACH[fk].color+'"></span>'+FACH[fk].name+'</h4>';
       tools.forEach(function(t){
         const parts=[];
-        REPORT[t.file].forEach(function(row){
-          const v=repVal(row);
-          if(v==null) return;
-          anyData=true;
-          if(row.warn && v>0) parts.push('<span class="warn">⚠ '+v+' '+row.label+'</span>');
-          else parts.push('<b>'+v+'</b> '+row.label);
-        });
+        if(REPORT[t.file]){
+          REPORT[t.file].forEach(function(row){
+            const v=repVal(row);
+            if(v==null) return;
+            anyData=true;
+            if(row.warn && v>0) parts.push('<span class="warn">⚠ '+v+' '+row.label+'</span>');
+            else parts.push('<b>'+v+'</b> '+row.label);
+          });
+        } else {
+          const p=lwProgress(t.file);
+          if(p){
+            if(typeof p.xp==="number"){ anyData=true; parts.push('<b>'+p.xp+'</b> XP'); }
+            if(typeof p.best==="number"){ anyData=true; parts.push('<b>'+p.best+'</b> Bestlauf'); }
+            if(typeof p.uebung==="number" && p.uebung>0){ anyData=true; parts.push('<span class="warn">⚠ '+p.uebung+' zu üben</span>'); }
+          }
+        }
         const row=document.createElement("div"); row.className="reprow";
         row.innerHTML='<span class="rn">'+t.icon+' '+t.title+'</span><span class="rv">'+
           (parts.length?parts.join(" · "):"noch nicht gespielt")+'</span>';
@@ -892,7 +904,7 @@
     });
     if(!anyData){
       const h=document.createElement("div"); h.className="rephint";
-      h.innerHTML="📂 Hier erscheinen Pauls Zahlen (XP, Bestläufe, Üben-Listen), sobald die Lernwelt über den <b>Server-Trick</b> geöffnet wird (python -m http.server). Beim normalen Doppelklick kann die Startseite die Spielstände der einzelnen Spiele aus technischen Gründen nicht lesen.";
+      h.innerHTML="📂 Hier erscheinen Pauls Zahlen (XP, Bestläufe, Üben-Listen), sobald er ein paar Spiele gespielt hat.";
       body.insertBefore(h, body.firstChild);
     }
   }
