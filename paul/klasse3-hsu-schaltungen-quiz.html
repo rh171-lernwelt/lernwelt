@@ -1,0 +1,526 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Schaltungs-Quiz ⚡</title>
+<style>
+  :root{
+    --bg:#0b1020;
+    --bg2:#0f1730;
+    --card:#161d33;
+    --card2:#1c2444;
+    --ink:#f2f5ff;
+    --muted:#9aa5c8;
+    --line:#2a3357;
+    --accent:#0a84ff;      /* Apple-Blau */
+    --accent2:#30d158;     /* Apple-Grün */
+    --warn:#ff453a;         /* Apple-Rot */
+    --yellow:#ffd60a;
+    --radius:22px;
+    --font:-apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",system-ui,sans-serif;
+    --round:ui-rounded,"SF Pro Rounded",-apple-system,system-ui,sans-serif;
+    --shadow:0 1px 2px rgba(0,0,0,.4),0 18px 50px rgba(0,0,0,.5);
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+  html,body{margin:0;padding:0;}
+  body{
+    font-family:var(--font);color:var(--ink);min-height:100vh;
+    background:
+      radial-gradient(900px 500px at 82% -8%,rgba(10,132,255,.22),transparent 55%),
+      radial-gradient(800px 500px at -8% 4%,rgba(48,209,88,.14),transparent 52%),
+      linear-gradient(180deg,var(--bg),var(--bg2));
+    background-attachment:fixed;-webkit-font-smoothing:antialiased;
+  }
+  .wrap{max-width:640px;margin:0 auto;padding:18px 18px 60px;}
+
+  /* Topbar */
+  .top{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:14px;flex-wrap:wrap;}
+  .back{
+    display:inline-flex;align-items:center;gap:7px;text-decoration:none;color:var(--ink);
+    background:var(--card);border:1px solid var(--line);border-radius:14px;
+    padding:9px 14px;font-size:14px;font-weight:600;font-family:var(--font);cursor:pointer;
+    transition:transform .12s ease,border-color .12s ease;
+  }
+  .back:hover{transform:translateY(-1px);border-color:#3b4675;}
+  .tbtns{display:flex;gap:8px;}
+  .ibtn{
+    border:1px solid var(--line);background:var(--card);border-radius:14px;
+    padding:9px 13px;font-size:14px;font-weight:600;color:var(--ink);cursor:pointer;
+    font-family:var(--font);transition:transform .12s ease,border-color .12s ease;
+  }
+  .ibtn:hover{transform:translateY(-1px);border-color:#3b4675;}
+  .ibtn:active{transform:translateY(0);}
+
+  /* Rang-Leiste */
+  .rankbar{
+    background:linear-gradient(135deg,var(--card2),var(--card));
+    border:1px solid var(--line);border-radius:var(--radius);
+    padding:14px 16px;box-shadow:var(--shadow);margin-bottom:16px;
+  }
+  .rankrow{display:flex;align-items:center;gap:12px;}
+  .rankemj{font-size:30px;line-height:1;filter:drop-shadow(0 3px 8px rgba(10,132,255,.5));}
+  .rankname{font-family:var(--round);font-weight:800;font-size:17px;letter-spacing:-.01em;}
+  .ranksub{color:var(--muted);font-size:12.5px;margin-top:1px;}
+  .xpwrap{margin-left:auto;text-align:right;}
+  .xpnum{font-family:var(--round);font-weight:800;font-size:18px;}
+  .xplbl{color:var(--muted);font-size:11.5px;}
+  .prog{height:9px;border-radius:99px;background:#0c1330;border:1px solid var(--line);margin-top:12px;overflow:hidden;}
+  .prog i{display:block;height:100%;width:0;border-radius:99px;
+    background:linear-gradient(90deg,var(--accent),#5ac8fa);transition:width .6s cubic-bezier(.2,.8,.2,1);}
+
+  /* Karten */
+  .card{
+    background:var(--card);border:1px solid var(--line);border-radius:var(--radius);
+    padding:22px 20px;box-shadow:var(--shadow);
+  }
+  .hero{text-align:center;}
+  .hero .big{font-family:var(--round);font-weight:800;font-size:26px;letter-spacing:-.02em;margin:6px 0 4px;}
+  .hero p{color:var(--muted);font-size:15px;line-height:1.5;margin:0 0 18px;}
+  .hero .zap{font-size:52px;line-height:1;filter:drop-shadow(0 6px 18px rgba(255,214,10,.4));}
+
+  .btn{
+    display:block;width:100%;border:none;border-radius:16px;padding:16px;cursor:pointer;
+    font-family:var(--round);font-weight:800;font-size:17px;color:#fff;
+    background:linear-gradient(135deg,var(--accent),#0060df);
+    box-shadow:0 10px 26px rgba(10,132,255,.4);
+    transition:transform .12s ease,box-shadow .12s ease;
+  }
+  .btn:hover{transform:translateY(-2px);box-shadow:0 16px 34px rgba(10,132,255,.5);}
+  .btn:active{transform:translateY(0);}
+  .btn.ghost{background:transparent;border:1.5px solid var(--line);color:var(--ink);box-shadow:none;margin-top:10px;}
+  .btn.ghost:hover{border-color:#3b4675;box-shadow:none;}
+  .btn.warm{background:linear-gradient(135deg,#ff9f0a,#ff6a00);box-shadow:0 10px 26px rgba(255,140,0,.35);margin-top:10px;}
+
+  /* Quiz */
+  .qhead{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;}
+  .qcount{color:var(--muted);font-size:13.5px;font-weight:700;}
+  .streak{display:inline-flex;align-items:center;gap:5px;font-size:14px;font-weight:800;color:var(--yellow);}
+  .qbarwrap{height:7px;border-radius:99px;background:#0c1330;border:1px solid var(--line);overflow:hidden;margin-bottom:16px;}
+  .qbarwrap i{display:block;height:100%;background:linear-gradient(90deg,var(--accent2),#8ef0a8);transition:width .4s ease;}
+
+  .diagram{
+    background:radial-gradient(120% 140% at 50% 0%,#14203f,#0f1830);
+    border:1px solid var(--line);border-radius:18px;padding:14px;margin-bottom:16px;
+    display:flex;justify-content:center;
+  }
+  .diagram svg{width:100%;max-width:300px;height:auto;}
+
+  .qtext{font-family:var(--round);font-weight:800;font-size:20px;line-height:1.35;letter-spacing:-.01em;margin:2px 0 18px;}
+
+  .opts{display:flex;flex-direction:column;gap:11px;}
+  .opt{
+    display:flex;align-items:center;gap:12px;text-align:left;width:100%;cursor:pointer;
+    background:var(--card2);border:1.5px solid var(--line);border-radius:15px;
+    padding:15px 16px;color:var(--ink);font-family:var(--font);font-size:16px;font-weight:600;
+    transition:transform .1s ease,border-color .12s ease,background .12s ease;
+  }
+  .opt:hover:not(:disabled){transform:translateY(-1px);border-color:#4a5798;}
+  .opt:disabled{cursor:default;}
+  .opt .dot{
+    width:26px;height:26px;border-radius:50%;flex:none;display:grid;place-items:center;
+    border:2px solid var(--line);font-size:14px;font-weight:800;color:var(--muted);
+  }
+  .opt.correct{border-color:var(--accent2);background:rgba(48,209,88,.16);}
+  .opt.correct .dot{background:var(--accent2);border-color:var(--accent2);color:#0b1020;}
+  .opt.wrong{border-color:var(--warn);background:rgba(255,69,58,.15);}
+  .opt.wrong .dot{background:var(--warn);border-color:var(--warn);color:#fff;}
+  .opt.dim{opacity:.5;}
+
+  .explain{
+    margin-top:16px;border-radius:15px;padding:14px 16px;font-size:14.5px;line-height:1.5;
+    border:1px solid var(--line);background:var(--card2);display:none;
+  }
+  .explain.show{display:block;animation:fade .3s ease;}
+  .explain.ok{border-color:rgba(48,209,88,.5);background:rgba(48,209,88,.1);}
+  .explain.no{border-color:rgba(255,159,10,.5);background:rgba(255,159,10,.1);}
+  .explain b{font-family:var(--round);}
+  @keyframes fade{from{opacity:0;transform:translateY(6px);}to{opacity:1;transform:none;}}
+
+  .next{margin-top:16px;display:none;}
+  .next.show{display:block;}
+
+  /* Ende */
+  .result .score{font-family:var(--round);font-weight:800;font-size:46px;letter-spacing:-.02em;}
+  .result .scoresub{color:var(--muted);font-size:15px;margin-top:2px;}
+  .medal{font-size:60px;line-height:1;margin-bottom:4px;}
+  .gain{display:inline-block;background:rgba(48,209,88,.16);border:1px solid rgba(48,209,88,.5);
+    color:#8ef0a8;font-weight:800;font-family:var(--round);border-radius:99px;padding:6px 14px;margin:12px 0;font-size:15px;}
+
+  canvas#cf{position:fixed;inset:0;pointer-events:none;z-index:60;}
+  @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important;}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="top">
+    <a class="back" id="back">‹ Zurück zur Lernwelt</a>
+    <div class="tbtns">
+      <button class="ibtn" id="speak" title="Frage vorlesen">🗣️</button>
+      <button class="ibtn" id="sound" title="Ton an/aus" aria-pressed="true">🔊</button>
+    </div>
+  </div>
+
+  <div class="rankbar">
+    <div class="rankrow">
+      <div class="rankemj" id="rankEmj">🔋</div>
+      <div>
+        <div class="rankname" id="rankName">Strom-Anfänger</div>
+        <div class="ranksub" id="rankSub">Sammle XP und werde zum Strom-Champion!</div>
+      </div>
+      <div class="xpwrap">
+        <div class="xpnum" id="xpNum">0</div>
+        <div class="xplbl">XP</div>
+      </div>
+    </div>
+    <div class="prog"><i id="rankProg"></i></div>
+  </div>
+
+  <!-- Startbildschirm -->
+  <section class="card hero" id="start">
+    <div class="zap">⚡</div>
+    <div class="big">Reihe oder Parallel?</div>
+    <p>Erkennst du die Stromkreise? Klick die richtige Antwort an –<br>und werde zum Schaltungs-Profi!</p>
+    <button class="btn" id="startBtn">Los geht's! 🚀</button>
+    <button class="btn warm" id="trainBtn" style="display:none">🔁 Fehler üben (<span id="trainCount">0</span>)</button>
+  </section>
+
+  <!-- Quiz -->
+  <section class="card" id="quiz" style="display:none">
+    <div class="qhead">
+      <span class="qcount" id="qCount">Frage 1</span>
+      <span class="streak" id="streakBox" style="visibility:hidden">🔥 <span id="streakNum">0</span></span>
+    </div>
+    <div class="qbarwrap"><i id="qBar"></i></div>
+    <div class="diagram" id="diagram" style="display:none"></div>
+    <div class="qtext" id="qText"></div>
+    <div class="opts" id="opts"></div>
+    <div class="explain" id="explain"></div>
+    <div class="next" id="nextWrap"><button class="btn" id="nextBtn">Weiter ›</button></div>
+  </section>
+
+  <!-- Ende -->
+  <section class="card hero result" id="end" style="display:none">
+    <div class="medal" id="medal">🏆</div>
+    <div class="score" id="scoreTxt">0 / 0</div>
+    <div class="scoresub" id="scoreSub">richtig beantwortet</div>
+    <div class="gain" id="gainTxt">+0 XP</div>
+    <div id="endMsg" style="color:var(--muted);font-size:15px;line-height:1.5;margin-bottom:18px"></div>
+    <button class="btn" id="againBtn">Nochmal spielen 🔄</button>
+    <button class="btn warm" id="endTrainBtn" style="display:none">🔁 Fehler üben (<span id="endTrainCount">0</span>)</button>
+    <button class="btn ghost" id="homeBtn">Zur Lernwelt</button>
+  </section>
+
+</div>
+<canvas id="cf"></canvas>
+
+<script>
+(function(){
+  "use strict";
+
+  /* ---------- Zurück-Knopf ---------- */
+  var hubUrl = "index.html";
+  try{ var h=localStorage.getItem("hub-url"); if(h) hubUrl=h; }catch(e){}
+  document.getElementById("back").addEventListener("click",function(){ location.href=hubUrl; });
+  document.getElementById("homeBtn").addEventListener("click",function(){ location.href=hubUrl; });
+
+  /* ---------- Speicher ---------- */
+  function gs(k,d){ try{var v=localStorage.getItem(k);return v==null?d:v;}catch(e){return d;} }
+  function ss(k,v){ try{localStorage.setItem(k,v);}catch(e){} }
+  function getArr(k){ try{var a=JSON.parse(localStorage.getItem(k)||"[]");return Array.isArray(a)?a:[];}catch(e){return [];} }
+  function setArr(k,a){ ss(k,JSON.stringify(a)); }
+
+  var XP_KEY="schaltungen-xp", BEST_KEY="schaltungen-best",
+      GAMES_KEY="schaltungen-games", MISS_KEY="schaltungen-mistakes";
+
+  var xp = parseInt(gs(XP_KEY,"0"),10)||0;
+  var bestStreak = parseInt(gs(BEST_KEY,"0"),10)||0;
+
+  /* ---------- Ränge ---------- */
+  var RANKS=[
+    {min:0,   name:"Strom-Anfänger",   emj:"🔋"},
+    {min:60,  name:"Kabel-Kenner",     emj:"🔌"},
+    {min:140, name:"Schalter-Profi",   emj:"💡"},
+    {min:240, name:"Stromkreis-Meister",emj:"⚡"},
+    {min:360, name:"Schaltungs-Experte",emj:"🧠"},
+    {min:500, name:"Strom-Champion",   emj:"🏆"}
+  ];
+  function rankFor(x){ var r=RANKS[0]; for(var i=0;i<RANKS.length;i++){ if(x>=RANKS[i].min) r=RANKS[i]; } return r; }
+  function nextRank(x){ for(var i=0;i<RANKS.length;i++){ if(x<RANKS[i].min) return RANKS[i]; } return null; }
+  function paintRank(){
+    var r=rankFor(xp), nx=nextRank(xp);
+    document.getElementById("rankEmj").textContent=r.emj;
+    document.getElementById("rankName").textContent=r.name;
+    document.getElementById("xpNum").textContent=xp;
+    if(nx){
+      var span=nx.min-r.min, done=xp-r.min;
+      document.getElementById("rankProg").style.width=Math.max(4,Math.round(done/span*100))+"%";
+      document.getElementById("rankSub").textContent="Noch "+(nx.min-xp)+" XP bis "+nx.name+" "+nx.emj;
+    }else{
+      document.getElementById("rankProg").style.width="100%";
+      document.getElementById("rankSub").textContent="Höchster Rang erreicht – stark! 🎉";
+    }
+  }
+
+  /* ---------- Stromkreis-Bilder ---------- */
+  function bulb(cx,cy){
+    return '<circle cx="'+cx+'" cy="'+cy+'" r="21" fill="#ffe58a" opacity="0.30"/>'+
+           '<circle cx="'+cx+'" cy="'+cy+'" r="14" fill="#fff2b0" stroke="#e8a13b" stroke-width="2.5"/>'+
+           '<path d="M '+(cx-6)+' '+(cy+3)+' Q '+cx+' '+(cy-7)+' '+(cx+6)+' '+(cy+3)+'" fill="none" stroke="#e0912b" stroke-width="2"/>';
+  }
+  function battery(cx,cy){
+    return '<rect x="'+(cx-23)+'" y="'+(cy-13)+'" width="46" height="26" rx="7" fill="#30d158" stroke="#1f9c42" stroke-width="2"/>'+
+           '<rect x="'+(cx+23)+'" y="'+(cy-5)+'" width="4" height="10" rx="1.5" fill="#1f9c42"/>'+
+           '<text x="'+(cx-11)+'" y="'+(cy+5)+'" font-family="sans-serif" font-size="16" font-weight="800" fill="#0b1020">+</text>'+
+           '<text x="'+(cx+7)+'" y="'+(cy+5)+'" font-family="sans-serif" font-size="16" font-weight="800" fill="#0b1020">–</text>';
+  }
+  var WIRE='stroke="#8fa0d6" stroke-width="4" fill="none" stroke-linecap="round" stroke-linejoin="round"';
+  var REIHE_SVG=
+    '<svg viewBox="0 0 300 175" xmlns="http://www.w3.org/2000/svg">'+
+      '<rect x="46" y="42" width="208" height="96" rx="16" '+WIRE+'/>'+
+      battery(150,138)+ bulb(100,42)+ bulb(200,42)+
+    '</svg>';
+  var PARALLEL_SVG=
+    '<svg viewBox="0 0 300 175" xmlns="http://www.w3.org/2000/svg">'+
+      '<line x1="70" y1="52" x2="70" y2="123" '+WIRE+'/>'+
+      '<line x1="234" y1="52" x2="234" y2="123" '+WIRE+'/>'+
+      '<line x1="70" y1="55" x2="234" y2="55" '+WIRE+'/>'+
+      '<line x1="70" y1="120" x2="234" y2="120" '+WIRE+'/>'+
+      battery(70,88)+ bulb(152,55)+ bulb(152,120)+
+    '</svg>';
+
+  /* ---------- Fragen (erste Antwort = richtig) ---------- */
+  var QUESTIONS=[
+    {id:"q1",diagram:"reihe",q:"Welche Schaltung siehst du hier?",
+      a:["Reihenschaltung","Parallelschaltung"],
+      explain:"Alle Lampen hängen in <b>einem einzigen Kreis hintereinander</b> – das ist eine Reihenschaltung. 🔗"},
+    {id:"q2",diagram:"parallel",q:"Und welche Schaltung ist das?",
+      a:["Parallelschaltung","Reihenschaltung"],
+      explain:"Jede Lampe hat <b>ihren eigenen Weg</b> zum Strom – das ist eine Parallelschaltung."},
+    {id:"q3",q:"Bei einer Reihenschaltung geht eine Lampe kaputt. Was passiert?",
+      a:["Alle Lampen gehen aus","Nur die kaputte Lampe geht aus","Alle leuchten heller"],
+      explain:"Der Stromkreis ist <b>unterbrochen</b> – deshalb gehen ALLE Lampen aus. 🌑"},
+    {id:"q4",q:"Bei einer Parallelschaltung geht eine Lampe kaputt. Was passiert mit den anderen?",
+      a:["Sie leuchten normal weiter","Sie gehen auch aus","Sie werden viel dunkler"],
+      explain:"Jede Lampe hat ihren eigenen Weg – die anderen <b>leuchten ganz normal weiter</b>. ✨"},
+    {id:"q5",q:"In welcher Schaltung sind alle Lampen hintereinander in einem einzigen Kreis?",
+      a:["Reihenschaltung","Parallelschaltung"],
+      explain:"Reihe = <b>hintereinander in einer Reihe</b>, wie eine Kette."},
+    {id:"q6",q:"In welcher Schaltung hat jede Lampe ihren eigenen Weg zum Strom?",
+      a:["Parallelschaltung","Reihenschaltung"],
+      explain:"Parallel = <b>eigene Wege nebeneinander</b>, jede Lampe für sich."},
+    {id:"q7",q:"Je mehr Lampen du in eine Reihenschaltung hängst, desto …",
+      a:["dunkler leuchten sie","heller leuchten sie","gar nichts ändert sich"],
+      explain:"Der Strom muss sich auf mehr Lampen verteilen – jede wird <b>dunkler</b>."},
+    {id:"q8",q:"Im Haus kann man jedes Zimmerlicht einzeln an- und ausmachen. Welche Schaltung ist das?",
+      a:["Parallelschaltung","Reihenschaltung"],
+      explain:"Nur bei der <b>Parallelschaltung</b> stört ein ausgeschaltetes Licht die anderen nicht. 🏠"},
+    {id:"q9",q:"Bei einer alten Lichterkette bleibt alles dunkel, wenn nur EINE Birne kaputt ist. Welche Schaltung?",
+      a:["Reihenschaltung","Parallelschaltung"],
+      explain:"Alle Birnen hängen hintereinander – eine kaputt und der ganze Kreis ist <b>unterbrochen</b>."},
+    {id:"q10",diagram:"reihe",q:"Du schneidest hier einen Draht durch. Wie viele Lampen leuchten dann noch?",
+      a:["Keine einzige","Eine Lampe","Beide Lampen"],
+      explain:"In der Reihenschaltung ist der Kreis dann unterbrochen – <b>keine</b> Lampe leuchtet mehr. ✂️"},
+    {id:"q11",diagram:"parallel",q:"Du schneidest hier bei EINER Lampe den Draht durch. Leuchtet die andere Lampe weiter?",
+      a:["Ja, sie leuchtet weiter","Nein, sie geht auch aus"],
+      explain:"Die andere Lampe hat ihren <b>eigenen Weg</b> – sie leuchtet einfach weiter. 💡"},
+    {id:"q12",q:"Welche Schaltung leuchtet insgesamt heller – bei gleicher Batterie?",
+      a:["Parallelschaltung","Reihenschaltung"],
+      explain:"In der Parallelschaltung bekommt jede Lampe die <b>volle Kraft</b> – sie leuchten heller. 🔆"}
+  ];
+  var BY_ID={}; QUESTIONS.forEach(function(q){ BY_ID[q.id]=q; });
+
+  /* ---------- Ton ---------- */
+  var actx=null, soundOn=gs("schaltungen-sound","1")!=="0";
+  function tone(f,d,delay,type){
+    if(!soundOn) return;
+    try{
+      actx=actx||new (window.AudioContext||window.webkitAudioContext)();
+      var o=actx.createOscillator(),g=actx.createGain();
+      o.type=type||"sine"; o.frequency.value=f;
+      var t0=actx.currentTime+(delay||0);
+      g.gain.setValueAtTime(0,t0); g.gain.linearRampToValueAtTime(.2,t0+.02);
+      g.gain.exponentialRampToValueAtTime(.0001,t0+d);
+      o.connect(g); g.connect(actx.destination); o.start(t0); o.stop(t0+d+.02);
+    }catch(e){}
+  }
+  function sRight(){ tone(660,.13,0,"triangle"); tone(880,.16,.1,"triangle"); }
+  function sWrong(){ tone(180,.22,0,"sawtooth"); }
+  function sWin(){ tone(523,.15,0); tone(659,.15,.12); tone(784,.28,.24); }
+  var soundBtn=document.getElementById("sound");
+  function paintSound(){ soundBtn.textContent=soundOn?"🔊":"🔈"; soundBtn.setAttribute("aria-pressed",soundOn?"true":"false"); }
+  paintSound();
+  soundBtn.addEventListener("click",function(){ soundOn=!soundOn; ss("schaltungen-sound",soundOn?"1":"0"); paintSound(); if(soundOn) tone(660,.1,0,"triangle"); });
+
+  /* ---------- Vorlesen ---------- */
+  document.getElementById("speak").addEventListener("click",function(){
+    try{
+      var t=document.getElementById("qText").textContent;
+      if(!t){ t="Willkommen beim Schaltungs-Quiz! Erkennst du Reihen- und Parallelschaltungen?"; }
+      var u=new SpeechSynthesisUtterance(t); u.lang="de-DE"; u.rate=.95;
+      speechSynthesis.cancel(); speechSynthesis.speak(u);
+    }catch(e){}
+  });
+
+  /* ---------- Konfetti ---------- */
+  function confetti(strong){
+    if(window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    var c=document.getElementById("cf"),x=c.getContext("2d");
+    c.width=innerWidth; c.height=innerHeight;
+    var cols=["#0a84ff","#30d158","#ffd60a","#5ac8fa","#ff9f0a","#bf5af2"];
+    var N=strong?150:60, P=[];
+    for(var i=0;i<N;i++){ P.push({x:Math.random()*c.width,y:-20-Math.random()*c.height*.35,
+      r:5+Math.random()*6,vy:2+Math.random()*3.5,vx:-1.5+Math.random()*3,
+      rot:Math.random()*6.28,vr:-.2+Math.random()*.4,col:cols[i%cols.length]}); }
+    var frames=0;
+    (function loop(){
+      x.clearRect(0,0,c.width,c.height); frames++;
+      P.forEach(function(p){ p.x+=p.vx;p.y+=p.vy;p.rot+=p.vr;p.vy+=.05;
+        x.save();x.translate(p.x,p.y);x.rotate(p.rot);x.fillStyle=p.col;
+        x.fillRect(-p.r/2,-p.r/2,p.r,p.r*.6);x.restore(); });
+      if(frames<(strong?200:120)) requestAnimationFrame(loop); else x.clearRect(0,0,c.width,c.height);
+    })();
+  }
+
+  /* ---------- Spiel-Logik ---------- */
+  function shuffle(a){ a=a.slice(); for(var i=a.length-1;i>0;i--){ var j=Math.floor(Math.random()*(i+1)); var t=a[i];a[i]=a[j];a[j]=t; } return a; }
+
+  var order=[], idx=0, correctCount=0, streak=0, gainedXp=0, wrongThisRun=[], isTraining=false;
+
+  var startEl=document.getElementById("start"),
+      quizEl=document.getElementById("quiz"),
+      endEl=document.getElementById("end");
+
+  function show(el){ startEl.style.display="none"; quizEl.style.display="none"; endEl.style.display="none"; el.style.display="block"; }
+
+  function refreshTrainButtons(){
+    var m=getArr(MISS_KEY);
+    var tb=document.getElementById("trainBtn");
+    if(m.length){ tb.style.display="block"; document.getElementById("trainCount").textContent=m.length; }
+    else tb.style.display="none";
+  }
+
+  function beginRun(list,training){
+    order=shuffle(list); idx=0; correctCount=0; streak=0; gainedXp=0; wrongThisRun=[]; isTraining=!!training;
+    show(quizEl); renderQuestion();
+  }
+
+  function renderQuestion(){
+    var q=order[idx];
+    document.getElementById("qCount").textContent="Frage "+(idx+1)+" / "+order.length;
+    document.getElementById("qBar").style.width=Math.round(idx/order.length*100)+"%";
+    var sb=document.getElementById("streakBox");
+    if(streak>=2){ sb.style.visibility="visible"; document.getElementById("streakNum").textContent=streak; }
+    else sb.style.visibility="hidden";
+
+    var dg=document.getElementById("diagram");
+    if(q.diagram){ dg.style.display="flex"; dg.innerHTML=(q.diagram==="reihe")?REIHE_SVG:PARALLEL_SVG; }
+    else dg.style.display="none";
+
+    document.getElementById("qText").textContent=q.q;
+
+    var correct=q.a[0];
+    var opts=shuffle(q.a);
+    var box=document.getElementById("opts"); box.innerHTML="";
+    var letters=["A","B","C","D"];
+    opts.forEach(function(txt,i){
+      var b=document.createElement("button");
+      b.className="opt";
+      b.innerHTML='<span class="dot">'+letters[i]+'</span><span>'+txt+'</span>';
+      b.addEventListener("click",function(){ choose(b,txt,correct,q); });
+      box.appendChild(b);
+    });
+
+    var ex=document.getElementById("explain"); ex.className="explain"; ex.innerHTML="";
+    document.getElementById("nextWrap").className="next";
+  }
+
+  function choose(btn,picked,correct,q){
+    var buttons=document.querySelectorAll("#opts .opt");
+    buttons.forEach(function(b){ b.disabled=true; });
+    var isRight=(picked===correct);
+    var ex=document.getElementById("explain");
+
+    if(isRight){
+      btn.classList.add("correct");
+      correctCount++; streak++;
+      var add=10+(streak>=3?5:0);
+      gainedXp+=add; xp+=add; ss(XP_KEY,String(xp)); paintRank();
+      sRight();
+      if(streak>=3) confetti(false);
+      // Fehler aus Übungsliste entfernen, wenn richtig
+      var m=getArr(MISS_KEY); var pos=m.indexOf(q.id); if(pos>=0){ m.splice(pos,1); setArr(MISS_KEY,m); }
+      ex.className="explain ok show";
+      ex.innerHTML='<b>Richtig! ✅</b> '+q.explain+(streak>=3?' <b>+'+add+' XP (🔥 Serie!)</b>':' +'+add+' XP');
+    }else{
+      btn.classList.add("wrong");
+      streak=0;
+      sWrong();
+      buttons.forEach(function(b){ if(b.textContent.indexOf(correct)>=0) b.classList.add("correct"); else if(b!==btn) b.classList.add("dim"); });
+      if(wrongThisRun.indexOf(q.id)<0) wrongThisRun.push(q.id);
+      var m2=getArr(MISS_KEY); if(m2.indexOf(q.id)<0){ m2.push(q.id); setArr(MISS_KEY,m2); }
+      ex.className="explain no show";
+      ex.innerHTML='<b>Fast! 💪</b> '+q.explain;
+    }
+
+    var sb=document.getElementById("streakBox");
+    if(streak>=2){ sb.style.visibility="visible"; document.getElementById("streakNum").textContent=streak; }
+    else sb.style.visibility="hidden";
+
+    var nw=document.getElementById("nextWrap"); nw.className="next show";
+    document.getElementById("nextBtn").textContent=(idx+1>=order.length)?"Fertig! 🎉":"Weiter ›";
+  }
+
+  document.getElementById("nextBtn").addEventListener("click",function(){
+    idx++;
+    if(idx>=order.length) finish();
+    else renderQuestion();
+  });
+
+  function finish(){
+    var total=order.length;
+    if(!isTraining){
+      var games=parseInt(gs(GAMES_KEY,"0"),10)||0; ss(GAMES_KEY,String(games+1));
+    }
+    if(correctCount>bestStreak){ /* nur informativ */ }
+
+    show(endEl);
+    document.getElementById("qBar").style.width="100%";
+    document.getElementById("scoreTxt").textContent=correctCount+" / "+total;
+    document.getElementById("gainTxt").textContent="+"+gainedXp+" XP";
+    var quote=correctCount/total;
+    var medal, msg;
+    if(quote===1){ medal="🏆"; msg="Perfekt! Du bist ein echter Schaltungs-Profi. ⚡"; confetti(true); sWin(); }
+    else if(quote>=0.7){ medal="🥇"; msg="Stark gemacht! Nur ein paar Kleinigkeiten noch."; confetti(true); sWin(); }
+    else if(quote>=0.4){ medal="🥈"; msg="Gut dabei! Übe die Fehler und du wirst noch besser."; }
+    else { medal="🔧"; msg="Guter Anfang! Üb die Fehler nochmal – das klappt gleich viel besser."; }
+    document.getElementById("medal").textContent=medal;
+    document.getElementById("endMsg").textContent=msg;
+    document.getElementById("scoreSub").textContent=isTraining?"beim Fehler-Üben":"richtig beantwortet";
+
+    var etb=document.getElementById("endTrainBtn");
+    if(wrongThisRun.length){ etb.style.display="block"; document.getElementById("endTrainCount").textContent=wrongThisRun.length; }
+    else etb.style.display="none";
+    refreshTrainButtons();
+  }
+
+  /* ---------- Knöpfe ---------- */
+  document.getElementById("startBtn").addEventListener("click",function(){ beginRun(QUESTIONS,false); });
+  document.getElementById("againBtn").addEventListener("click",function(){ beginRun(QUESTIONS,false); });
+  document.getElementById("trainBtn").addEventListener("click",function(){
+    var m=getArr(MISS_KEY).map(function(id){return BY_ID[id];}).filter(Boolean);
+    if(m.length) beginRun(m,true);
+  });
+  document.getElementById("endTrainBtn").addEventListener("click",function(){
+    var list=wrongThisRun.map(function(id){return BY_ID[id];}).filter(Boolean);
+    if(list.length) beginRun(list,true);
+  });
+
+  /* ---------- Start ---------- */
+  paintRank();
+  refreshTrainButtons();
+})();
+</script>
+</body>
+</html>
