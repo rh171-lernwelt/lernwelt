@@ -18,6 +18,7 @@
     --spass:#ec4899;
     --mathe:#10b981;
     --englisch:#ef4444;
+    --religion:#0891b2;
     --flame1:#fb923c;
     --flame2:#f43f5e;
     --radius:22px;
@@ -425,9 +426,10 @@
     hsu:     {name:"HSU", color:"var(--hsu)"},
     musik:   {name:"Musik", color:"var(--musik)"},
     englisch:{name:"Englisch", color:"var(--englisch)"},
+    religion:{name:"Religion", color:"var(--religion)"},
     spass:   {name:"Spaß", color:"var(--spass)"}
   };
-  const FACH_ORDER = ["deutsch","mathe","hsu","musik","englisch","spass"];
+  const FACH_ORDER = ["deutsch","mathe","hsu","musik","englisch","religion","spass"];
   const INVITES = [
     {fach:"mathe", name:"Mathe", color:"var(--mathe)", icon:"➕", text:"Lade ein Mathe-Blatt hoch – hier entsteht dein erstes Spiel."},
     {fach:"englisch", name:"Englisch", color:"var(--englisch)", icon:"🇬🇧", text:"Noch leer! Dein erstes English-Game wartet auf dich."}
@@ -438,9 +440,11 @@
   // Neue Spiele brauchen KEINEN Eintrag – dann werden Titel/Emoji aus dem Dateinamen abgeleitet.
   const OVERRIDES = {
     "klasse3-mathe-gewichte-wiegespiel.html":
-      {title:"Wiege-Meister", sub:"Pauls Marktstand – Gewichte wiegen", icon:"⚖️", type:"Spiel"}
+      {title:"Wiege-Meister", sub:"Pauls Marktstand – Gewichte wiegen", icon:"⚖️", type:"Spiel"},
+    "klasse3-religion-beten-quiz.html":
+      {title:"Beten-Quiz", sub:"Rund ums Beten", icon:"🙏", type:"Quiz"}
   };
-  const FACH_ICON = {deutsch:"📘", mathe:"🔢", hsu:"🌍", musik:"🎵", englisch:"🇬🇧", spass:"🎲"};
+  const FACH_ICON = {deutsch:"📘", mathe:"🔢", hsu:"🌍", musik:"🎵", englisch:"🇬🇧", religion:"🙏", spass:"🎲"};
 
   // Baut aus einem Dateinamen ein Tool-Objekt (für Spiele, die nicht in TOOLS stehen).
   function deriveTool(file){
