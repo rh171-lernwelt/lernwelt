@@ -1,0 +1,523 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Beten-Quiz</title>
+<style>
+  :root{
+    --ink:#1b1c22; --muted:#71768a; --line:#e5e7f0;
+    --card:#ffffff; --indigo:#4f46e5; --violet:#7c5cff; --gold:#e8a33d;
+    --green:#12b76a; --red:#f04438;
+    --radius:22px;
+    --shadow:0 1px 2px rgba(20,22,40,.05), 0 12px 30px rgba(20,22,40,.08);
+    --round: ui-rounded, "SF Pro Rounded", -apple-system, system-ui, sans-serif;
+    --font: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    font-family:var(--font); color:var(--ink); min-height:100vh;
+    background:
+      radial-gradient(1100px 560px at 82% -12%, #f4efff 0%, rgba(244,239,255,0) 55%),
+      radial-gradient(900px 520px at -8% 0%, #e9f2ff 0%, rgba(233,242,255,0) 52%),
+      linear-gradient(180deg,#eef1f7 0%, #e7ebf5 100%);
+    background-attachment:fixed; -webkit-font-smoothing:antialiased;
+    display:flex; flex-direction:column; align-items:center;
+    padding:18px 16px 48px;
+  }
+  .home{
+    position:fixed; top:14px; left:14px; z-index:20;
+    display:flex; align-items:center; gap:7px;
+    background:var(--card); border:1px solid var(--line); border-radius:14px;
+    padding:9px 13px; font-family:var(--round); font-weight:800; font-size:14px;
+    color:var(--ink); text-decoration:none; box-shadow:var(--shadow); cursor:pointer;
+    transition:transform .12s ease;
+  }
+  .home:hover{transform:translateY(-1px);}
+  .sound{
+    position:fixed; top:14px; right:14px; z-index:20;
+    background:var(--card); border:1px solid var(--line); border-radius:14px;
+    padding:9px 13px; font-size:14px; font-family:var(--round); font-weight:800;
+    color:var(--ink); box-shadow:var(--shadow); cursor:pointer;
+  }
+
+  .wrap{width:100%; max-width:640px; margin-top:52px;}
+  .card{
+    background:var(--card); border:1px solid var(--line); border-radius:var(--radius);
+    box-shadow:var(--shadow); padding:26px 24px;
+  }
+
+  /* ----- Kopf mit Rang + XP ----- */
+  .rankbar{display:flex; align-items:center; gap:13px; margin-bottom:16px;}
+  .rankemj{
+    width:52px; height:52px; border-radius:16px; flex:none; display:grid; place-items:center;
+    font-size:28px; background:color-mix(in srgb, var(--violet) 15%, white);
+  }
+  .rankinfo{flex:1; min-width:0;}
+  .rankname{font-family:var(--round); font-weight:800; font-size:16px; letter-spacing:-.01em;}
+  .xptext{color:var(--muted); font-size:12.5px; margin-top:1px;}
+  .xpbar{height:9px; border-radius:99px; background:#eceef6; overflow:hidden; margin-top:7px;}
+  .xpfill{height:100%; border-radius:99px; background:linear-gradient(90deg,var(--violet),var(--indigo)); width:0%; transition:width .5s ease;}
+
+  h1{font-family:var(--round); font-weight:800; font-size:30px; letter-spacing:-.02em; margin:6px 0 4px; text-align:center;}
+  .subtitle{color:var(--muted); text-align:center; font-size:15px; margin:0 0 4px;}
+  .bigemj{font-size:56px; text-align:center; margin:4px 0 2px;}
+
+  .stats{display:flex; gap:10px; justify-content:center; margin:18px 0 4px; flex-wrap:wrap;}
+  .pill{background:#f4f5fb; border:1px solid var(--line); border-radius:14px; padding:9px 14px; text-align:center; min-width:92px;}
+  .pill b{font-family:var(--round); font-weight:800; font-size:18px; display:block; letter-spacing:-.01em;}
+  .pill span{color:var(--muted); font-size:12px;}
+
+  .btn{
+    display:block; width:100%; border:none; cursor:pointer; font-family:var(--round);
+    font-weight:800; font-size:18px; color:#fff; padding:15px; border-radius:16px; margin-top:18px;
+    background:linear-gradient(150deg,var(--violet),var(--indigo));
+    box-shadow:0 10px 24px rgba(92,108,255,.34); transition:transform .12s ease, box-shadow .12s ease;
+  }
+  .btn:hover{transform:translateY(-2px);}
+  .btn:active{transform:translateY(0);}
+  .btn.ghost{background:#f2f3fb; color:var(--indigo); box-shadow:none; border:1px solid var(--line);}
+  .btn.gold{background:linear-gradient(150deg,#f6b545,var(--gold)); box-shadow:0 10px 24px rgba(232,163,61,.34);}
+  .btnrow{display:flex; gap:11px;}
+  .btnrow .btn{margin-top:12px;}
+
+  /* ----- Frage ----- */
+  .qtop{display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:12px;}
+  .counter{font-family:var(--round); font-weight:800; color:var(--muted); font-size:14px;}
+  .serie{display:flex; align-items:center; gap:6px; font-family:var(--round); font-weight:800; font-size:14px; color:var(--gold);}
+  .serie.hidden{visibility:hidden;}
+  .prog{height:8px; border-radius:99px; background:#eceef6; overflow:hidden; margin-bottom:20px;}
+  .progfill{height:100%; background:linear-gradient(90deg,var(--gold),#f6c073); width:0%; transition:width .35s ease;}
+
+  .qtext{font-family:var(--round); font-weight:800; font-size:22px; line-height:1.3; letter-spacing:-.01em; margin:0 0 4px;}
+  .readbtn{
+    display:inline-flex; align-items:center; gap:6px; margin:10px 0 16px;
+    background:#f2f3fb; border:1px solid var(--line); border-radius:12px; padding:7px 12px;
+    font-family:var(--round); font-weight:800; font-size:13.5px; color:var(--indigo); cursor:pointer;
+  }
+  .answers{display:flex; flex-direction:column; gap:11px;}
+  .ans{
+    text-align:left; width:100%; cursor:pointer; font-family:var(--font); font-weight:600;
+    font-size:16.5px; color:var(--ink); background:#fff; border:2px solid var(--line);
+    border-radius:15px; padding:15px 16px; transition:border-color .12s ease, background .12s ease, transform .1s ease;
+    display:flex; align-items:center; gap:12px;
+  }
+  .ans:hover:not(:disabled){border-color:#c7cce6; transform:translateY(-1px);}
+  .ans .mark{width:26px; height:26px; border-radius:50%; flex:none; display:grid; place-items:center;
+    background:#f0f1f8; font-family:var(--round); font-weight:800; font-size:14px; color:var(--muted);}
+  .ans.correct{border-color:var(--green); background:#eafaf1;}
+  .ans.correct .mark{background:var(--green); color:#fff;}
+  .ans.wrong{border-color:var(--red); background:#fdecea;}
+  .ans.wrong .mark{background:var(--red); color:#fff;}
+  .ans.dim{opacity:.55;}
+  .ans:disabled{cursor:default;}
+
+  .feedback{margin-top:16px; border-radius:15px; padding:14px 16px; font-size:14.5px; line-height:1.45; display:none;}
+  .feedback.show{display:block; animation:pop .2s ease;}
+  .feedback.good{background:#eafaf1; border:1px solid #b6ecce; color:#0b7a48;}
+  .feedback.bad{background:#fff5f4; border:1px solid #fbcfca; color:#b3271e;}
+  .feedback b{font-weight:800;}
+  @keyframes pop{from{transform:scale(.97); opacity:0;} to{transform:scale(1); opacity:1;}}
+
+  /* ----- Ende ----- */
+  .scorebig{font-family:var(--round); font-weight:800; font-size:44px; text-align:center; letter-spacing:-.02em; margin:6px 0 0;}
+  .levelup{background:linear-gradient(150deg,#fff7e8,#fdeccd); border:1px solid #f6d79a; color:#9a5b1e;
+    border-radius:15px; padding:13px 15px; text-align:center; font-family:var(--round); font-weight:800; margin-top:14px;}
+
+  canvas#confetti{position:fixed; inset:0; pointer-events:none; z-index:60;}
+  .hidden{display:none !important;}
+  @media (prefers-reduced-motion: reduce){ *{animation:none!important; transition:none!important;} }
+  @media(max-width:480px){ h1{font-size:26px;} .qtext{font-size:20px;} }
+</style>
+</head>
+<body>
+  <a class="home" id="homeBtn">🏠 Startseite</a>
+  <button class="sound" id="soundBtn" aria-pressed="true">🔊</button>
+
+  <div class="wrap">
+    <!-- START -->
+    <section class="card" id="startScreen">
+      <div class="rankbar">
+        <div class="rankemj" id="s_rankemj">🌱</div>
+        <div class="rankinfo">
+          <div class="rankname" id="s_rankname">Neuling</div>
+          <div class="xptext" id="s_xptext">0 XP</div>
+          <div class="xpbar"><div class="xpfill" id="s_xpfill"></div></div>
+        </div>
+      </div>
+      <div class="bigemj">🙏</div>
+      <h1>Beten-Quiz</h1>
+      <p class="subtitle">Warum und wie Menschen beten</p>
+      <div class="stats">
+        <div class="pill"><b id="s_best">0</b><span>Bestlauf</span></div>
+        <div class="pill"><b id="s_games">0</b><span>Runden</span></div>
+        <div class="pill"><b id="s_total">22</b><span>Fragen</span></div>
+      </div>
+      <button class="btn" id="startBtn">Los geht's 🙏</button>
+      <button class="btn ghost hidden" id="trainBtn">Fehler üben (<span id="s_mistakes">0</span>)</button>
+    </section>
+
+    <!-- QUIZ -->
+    <section class="card hidden" id="quizScreen">
+      <div class="qtop">
+        <div class="counter" id="counter">Frage 1 von 22</div>
+        <div class="serie hidden" id="serie">🔥 <span id="serieNum">0</span></div>
+      </div>
+      <div class="prog"><div class="progfill" id="progfill"></div></div>
+      <p class="qtext" id="qtext">…</p>
+      <button class="readbtn" id="readBtn">🗣️ Vorlesen</button>
+      <div class="answers" id="answers"></div>
+      <div class="feedback" id="feedback"></div>
+      <button class="btn hidden" id="nextBtn">Weiter →</button>
+    </section>
+
+    <!-- ENDE -->
+    <section class="card hidden" id="endScreen">
+      <div class="bigemj" id="e_emj">🎉</div>
+      <h1 id="e_title">Stark gemacht!</h1>
+      <div class="scorebig" id="e_score">0 / 22</div>
+      <p class="subtitle" id="e_sub">richtig beantwortet</p>
+      <div class="levelup hidden" id="e_levelup"></div>
+      <div class="stats">
+        <div class="pill"><b id="e_xp">+0</b><span>XP dazu</span></div>
+        <div class="pill"><b id="e_rank">🌱</b><span id="e_rankname">Neuling</span></div>
+      </div>
+      <button class="btn" id="againBtn">Nochmal spielen 🔁</button>
+      <button class="btn gold hidden" id="fixBtn">Fehler üben (<span id="e_mistakes">0</span>)</button>
+      <button class="btn ghost" id="homeBtn2">🏠 Zur Startseite</button>
+    </section>
+  </div>
+
+  <canvas id="confetti"></canvas>
+
+<script>
+(function(){
+  "use strict";
+
+  // ---------- Fragen ----------
+  const QUESTIONS = [
+    {q:"Was bedeutet Beten?",
+     a:["Mit Gott sprechen","Ein Lied singen","Ein Computerspiel spielen","Ein Buch lesen"],
+     why:"Beten heißt: mit Gott sprechen – so wie mit einem guten Freund."},
+    {q:"Braucht man zum Beten ein Handy oder Internet?",
+     a:["Nein, gar nicht","Ja, ein Handy","Ja, WLAN","Ja, einen Computer"],
+     why:"Beten geht immer und überall – ganz ohne Technik."},
+    {q:"Wie kann man Gott beim Beten alles erzählen?",
+     a:["Wie einem guten Freund","Nur mit schweren Wörtern","Nur auf Englisch","Gar nicht"],
+     why:"Man darf Gott alles erzählen, so wie einem guten Freund."},
+    {q:"„Lieber Gott, danke für das leckere Essen.“ Was ist das?",
+     a:["Danken","Bitten","Streiten","Rechnen"],
+     why:"Beim Danken sagt man Gott Danke für schöne Dinge."},
+    {q:"„Bitte hilf meiner kranken Oma.“ Was ist das?",
+     a:["Bitten","Danken","Loben","Schlafen"],
+     why:"Beim Bitten fragt man Gott um Hilfe."},
+    {q:"Jemand staunt über den Regenbogen und freut sich über Gottes Welt. Was ist das?",
+     a:["Loben","Bitten","Danken","Rechnen"],
+     why:"Beim Loben freut man sich und staunt über die schöne Welt."},
+    {q:"Jemand ist traurig und erzählt Gott davon. Was ist das?",
+     a:["Sorgen erzählen","Loben","Danken","Turnen"],
+     why:"Man kann Gott auch seine Sorgen erzählen. Das tröstet."},
+    {q:"Warum tröstet Beten, wenn man Angst hat?",
+     a:["Man fühlt sich nicht allein","Man wird sofort reich","Man muss nie mehr lernen","Man wird unsichtbar"],
+     why:"Beim Beten fühlt man sich nicht allein – man kann Gott alles erzählen."},
+    {q:"Was machen viele Menschen beim Beten mit den Händen?",
+     a:["Sie falten sie","Sie klatschen","Sie winken damit","Sie verstecken sie"],
+     why:"Viele falten die Hände, um ganz ruhig zu werden."},
+    {q:"Was machen viele beim Beten mit den Augen?",
+     a:["Sie schließen sie","Sie reiben sie","Sie zwinkern ständig","Sie malen sie an"],
+     why:"Viele schließen die Augen und werden dabei ruhig."},
+    {q:"Kann man auch ganz allein beten?",
+     a:["Ja, ganz für sich","Nein, niemals","Nur mit 10 Leuten","Nur im Bus"],
+     why:"Man kann allein beten – oder zusammen mit anderen."},
+    {q:"Wo beten Menschen oft gemeinsam?",
+     a:["In der Kirche","Im Schwimmbad","Im Kino","Auf dem Spielplatz"],
+     why:"In der Kirche beten viele Menschen zusammen."},
+    {q:"Muss man beim Beten immer laut sprechen?",
+     a:["Nein, auch leise im Herzen","Ja, immer laut","Ja, mit Mikrofon","Ja, nur singend"],
+     why:"Man kann laut sprechen oder ganz leise im Herzen beten."},
+    {q:"Wann beten viele Menschen?",
+     a:["Morgens, abends oder vor dem Essen","Nur an Weihnachten","Nur im Sommer","Nur um Mitternacht"],
+     why:"Viele beten morgens, abends oder vor dem Essen – aber es geht jederzeit."},
+    {q:"Kann man überall beten?",
+     a:["Ja, überall","Nur in der Kirche","Nur zu Hause","Nur in der Schule"],
+     why:"Beten geht überall und zu jeder Zeit."},
+    {q:"Mit welchen Worten kann man beten?",
+     a:["Mit eigenen oder bekannten Worten","Nur mit fremden Wörtern","Nur mit Zahlen","Gar nicht"],
+     why:"Man kann mit eigenen Worten beten oder ein bekanntes Gebet sprechen."},
+    {q:"Wie heißt das bekannteste Gebet?",
+     a:["Das Vaterunser","Das Einmaleins","Das ABC","Die Nationalhymne"],
+     why:"Das Vaterunser ist das bekannteste Gebet."},
+    {q:"Wer hat den Menschen das Vaterunser beigebracht?",
+     a:["Jesus","Ein Lehrer","Ein Fußballspieler","Ein Roboter"],
+     why:"Jesus hat den Menschen das Vaterunser beigebracht."},
+    {q:"Ist Beten wie Zaubern, dass man sofort alles bekommt?",
+     a:["Nein, Beten ist sprechen mit Gott","Ja, wie ein Zaubertrick","Ja, wie ein Wunschautomat","Ja, mit Zauberstab"],
+     why:"Beten ist kein Zauber – es ist sprechen mit Gott."},
+    {q:"Was gehört NICHT zu den Gründen fürs Beten?",
+     a:["Angeben","Danken","Bitten","Loben"],
+     why:"Menschen beten zum Danken, Bitten, Loben und um Sorgen zu erzählen – nicht zum Angeben."},
+    {q:"„Danke, lieber Gott, für meine Familie.“ Welche Art Gebet ist das?",
+     a:["Ein Dank-Gebet","Ein Bitt-Gebet","Ein Klage-Gebet","Ein Streit-Gebet"],
+     why:"Das ist ein Dank-Gebet – man sagt Danke."},
+    {q:"Was passiert oft, wenn Menschen zusammen beten?",
+     a:["Sie fühlen sich verbunden","Sie streiten","Sie werden traurig","Sie schlafen ein"],
+     why:"Gemeinsam beten verbindet die Menschen."}
+  ];
+  // richtige Antwort ist im Datensatz immer a[0] – wird beim Anzeigen gemischt.
+
+  // ---------- Ränge ----------
+  const RANKS = [
+    {emj:"🌱", name:"Neuling",        at:0},
+    {emj:"🕯️", name:"Entdecker",      at:60},
+    {emj:"🙏", name:"Beten-Kenner",   at:150},
+    {emj:"📖", name:"Beten-Profi",    at:280},
+    {emj:"⭐", name:"Beten-Meister",  at:450},
+    {emj:"🏆", name:"Beten-Champion", at:700}
+  ];
+  function rankFor(xp){
+    let r=RANKS[0], idx=0;
+    for(let i=0;i<RANKS.length;i++){ if(xp>=RANKS[i].at){ r=RANKS[i]; idx=i; } }
+    const next = RANKS[idx+1] || null;
+    return {rank:r, idx:idx, next:next};
+  }
+
+  // ---------- Speicher ----------
+  const KX="beten-quiz-xp", KB="beten-quiz-best", KG="beten-quiz-games",
+        KM="beten-quiz-mistakes", KS="beten-quiz-sound";
+  const get=(k,d)=>{ try{const v=localStorage.getItem(k); return v==null?d:v;}catch(e){return d;} };
+  const set=(k,v)=>{ try{localStorage.setItem(k,v);}catch(e){} };
+  set("hub-url", get("hub-url","index.html")); // Startseite merken
+
+  let xp = parseInt(get(KX,"0"),10)||0;
+  let best = parseInt(get(KB,"0"),10)||0;
+  let games = parseInt(get(KG,"0"),10)||0;
+  let soundOn = get(KS,"1")!=="0";
+  let savedMistakes = [];
+  try{ savedMistakes = JSON.parse(get(KM,"[]"))||[]; }catch(e){ savedMistakes=[]; }
+
+  // ---------- Ton ----------
+  let actx=null;
+  function tone(freq,dur,delay,type){
+    if(!soundOn) return;
+    try{
+      actx = actx || new (window.AudioContext||window.webkitAudioContext)();
+      if(actx.state==="suspended") actx.resume();
+      const o=actx.createOscillator(), g=actx.createGain();
+      o.type=type||"sine"; o.frequency.value=freq;
+      const t0=actx.currentTime+(delay||0);
+      g.gain.setValueAtTime(0,t0);
+      g.gain.linearRampToValueAtTime(.18,t0+.02);
+      g.gain.exponentialRampToValueAtTime(.0001,t0+dur);
+      o.connect(g); g.connect(actx.destination);
+      o.start(t0); o.stop(t0+dur+.03);
+    }catch(e){}
+  }
+  const sRight = ()=>{ tone(660,.12,0,"triangle"); tone(880,.16,.1,"triangle"); };
+  const sWrong = ()=> tone(200,.22,0,"sawtooth");
+  const sClick = ()=> tone(520,.08,0,"triangle");
+  const sFan   = ()=>{ tone(523,.16,0); tone(659,.16,.13); tone(784,.30,.26); };
+
+  // ---------- Konfetti ----------
+  const reduce = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  function confetti(n){
+    if(reduce) return;
+    const c=document.getElementById("confetti"), x=c.getContext("2d");
+    c.width=innerWidth; c.height=innerHeight;
+    const cols=["#5b8cff","#7c5cff","#e8a33d","#12b76a","#f04438","#f6c073","#8b5cf6"];
+    const P=[];
+    for(let i=0;i<(n||130);i++){
+      P.push({x:Math.random()*c.width, y:-20-Math.random()*c.height*.4,
+        r:5+Math.random()*6, vy:2+Math.random()*3.5, vx:-1.5+Math.random()*3,
+        rot:Math.random()*6.28, vr:-.2+Math.random()*.4, col:cols[i%cols.length]});
+    }
+    let f=0;
+    (function loop(){
+      x.clearRect(0,0,c.width,c.height); f++;
+      P.forEach(p=>{ p.x+=p.vx; p.y+=p.vy; p.rot+=p.vr; p.vy+=.05;
+        x.save(); x.translate(p.x,p.y); x.rotate(p.rot); x.fillStyle=p.col;
+        x.fillRect(-p.r/2,-p.r/2,p.r,p.r*.62); x.restore(); });
+      if(f<210) requestAnimationFrame(loop); else x.clearRect(0,0,c.width,c.height);
+    })();
+  }
+
+  // ---------- Vorlesen ----------
+  function speak(text){
+    try{ speechSynthesis.cancel();
+      const u=new SpeechSynthesisUtterance(text); u.lang="de-DE"; u.rate=.96; speechSynthesis.speak(u);
+    }catch(e){}
+  }
+
+  // ---------- Hilfen ----------
+  const $=id=>document.getElementById(id);
+  function shuffle(arr){ const a=arr.slice(); for(let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; } return a; }
+
+  // ---------- Startbildschirm zeichnen ----------
+  function paintStart(){
+    const info=rankFor(xp);
+    $("s_rankemj").textContent=info.rank.emj;
+    $("s_rankname").textContent=info.rank.name;
+    if(info.next){
+      const span=info.next.at-info.rank.at, done=xp-info.rank.at;
+      $("s_xpfill").style.width=Math.max(4,Math.min(100,Math.round(done/span*100)))+"%";
+      $("s_xptext").textContent=xp+" XP · noch "+(info.next.at-xp)+" bis "+info.next.name;
+    } else {
+      $("s_xpfill").style.width="100%";
+      $("s_xptext").textContent=xp+" XP · höchster Rang erreicht! 🏆";
+    }
+    $("s_best").textContent=best;
+    $("s_games").textContent=games;
+    $("s_total").textContent=QUESTIONS.length;
+    const tb=$("trainBtn");
+    if(savedMistakes.length){ tb.classList.remove("hidden"); $("s_mistakes").textContent=savedMistakes.length; }
+    else tb.classList.add("hidden");
+  }
+
+  // ---------- Spielzustand ----------
+  let queue=[];      // Indizes der Fragen dieser Runde
+  let pos=0;         // aktuelle Position
+  let correctCount=0;
+  let runMistakes=[];
+  let serie=0;
+  let runXP=0;
+  let locked=false;
+
+  function startGame(indices){
+    queue = indices ? indices.slice() : shuffle(QUESTIONS.map((_,i)=>i));
+    if(queue.length===0) queue = shuffle(QUESTIONS.map((_,i)=>i));
+    pos=0; correctCount=0; runMistakes=[]; serie=0; runXP=0;
+    $("startScreen").classList.add("hidden");
+    $("endScreen").classList.add("hidden");
+    $("quizScreen").classList.remove("hidden");
+    renderQuestion();
+  }
+
+  function renderQuestion(){
+    locked=false;
+    const idx=queue[pos];
+    const item=QUESTIONS[idx];
+    $("counter").textContent="Frage "+(pos+1)+" von "+queue.length;
+    $("progfill").style.width=Math.round(pos/queue.length*100)+"%";
+    const s=$("serie");
+    if(serie>=2){ s.classList.remove("hidden"); $("serieNum").textContent=serie; } else s.classList.add("hidden");
+    $("qtext").textContent=item.q;
+    $("feedback").className="feedback"; $("feedback").innerHTML="";
+    $("nextBtn").classList.add("hidden");
+
+    const answers=$("answers"); answers.innerHTML="";
+    const opts=shuffle(item.a.map((text,i)=>({text, correct:i===0})));
+    const letters=["A","B","C","D"];
+    opts.forEach((o,i)=>{
+      const b=document.createElement("button");
+      b.className="ans";
+      b.innerHTML='<span class="mark">'+letters[i]+'</span><span>'+o.text+'</span>';
+      b.addEventListener("click",()=>choose(b,o,idx,item));
+      answers.appendChild(b);
+    });
+  }
+
+  function choose(btn,opt,idx,item){
+    if(locked) return; locked=true;
+    const all=[...document.querySelectorAll(".ans")];
+    all.forEach(a=>{ a.disabled=true; });
+    const fb=$("feedback");
+    if(opt.correct){
+      btn.classList.add("correct");
+      correctCount++; serie++;
+      let gain=10 + Math.min(10,(serie-1)*2);   // Serien-Bonus
+      runXP+=gain;
+      sRight(); confetti(serie>=3?90:55);
+      fb.className="feedback good show";
+      fb.innerHTML="<b>Richtig! +"+gain+" XP</b><br>"+item.why;
+    }else{
+      btn.classList.add("wrong");
+      serie=0;
+      runMistakes.push(idx);
+      sWrong();
+      // richtige Antwort markieren
+      all.forEach(a=>{ if(a.querySelector("span:last-child").textContent===item.a[0]) a.classList.add("correct"); });
+      all.forEach(a=>{ if(!a.classList.contains("correct")&&!a.classList.contains("wrong")) a.classList.add("dim"); });
+      fb.className="feedback bad show";
+      fb.innerHTML="<b>Nicht ganz.</b> Richtig ist: <b>"+item.a[0]+"</b><br>"+item.why;
+    }
+    // Serie-Anzeige aktualisieren
+    const s=$("serie");
+    if(serie>=2){ s.classList.remove("hidden"); $("serieNum").textContent=serie; } else s.classList.add("hidden");
+    $("nextBtn").classList.remove("hidden");
+    $("nextBtn").textContent = (pos+1>=queue.length) ? "Ergebnis ansehen 🎉" : "Weiter →";
+  }
+
+  function next(){
+    sClick();
+    pos++;
+    if(pos>=queue.length){ finish(); }
+    else renderQuestion();
+  }
+
+  function finish(){
+    $("progfill").style.width="100%";
+    // Speichern
+    const beforeRank=rankFor(xp).idx;
+    xp+=runXP; set(KX,String(xp));
+    games++; set(KG,String(games));
+    if(correctCount>best){ best=correctCount; set(KB,String(best)); }
+    savedMistakes = [...new Set(runMistakes)];
+    set(KM, JSON.stringify(savedMistakes));
+    const afterInfo=rankFor(xp), afterRank=afterInfo.idx;
+
+    $("quizScreen").classList.add("hidden");
+    $("endScreen").classList.remove("hidden");
+
+    const total=queue.length;
+    const perfect = correctCount===total;
+    $("e_score").textContent=correctCount+" / "+total;
+    $("e_xp").textContent="+"+runXP;
+    $("e_rank").textContent=afterInfo.rank.emj;
+    $("e_rankname").textContent=afterInfo.rank.name;
+
+    let emj, title, sub;
+    if(perfect){ emj="🏆"; title="Perfekt, alles richtig!"; sub="Wahnsinn – volle Punktzahl!"; }
+    else if(correctCount>=total*0.7){ emj="🎉"; title="Stark gemacht!"; sub="richtig beantwortet"; }
+    else if(correctCount>=total*0.4){ emj="👍"; title="Gut drangeblieben!"; sub="richtig beantwortet"; }
+    else { emj="🌱"; title="Weiter üben lohnt sich!"; sub="richtig beantwortet"; }
+    $("e_emj").textContent=emj; $("e_title").textContent=title; $("e_sub").textContent=sub;
+
+    const lu=$("e_levelup");
+    if(afterRank>beforeRank){
+      lu.classList.remove("hidden");
+      lu.textContent="⬆️ Neuer Rang: "+afterInfo.rank.emj+" "+afterInfo.rank.name+"!";
+    } else lu.classList.add("hidden");
+
+    const fx=$("fixBtn");
+    if(savedMistakes.length){ fx.classList.remove("hidden"); $("e_mistakes").textContent=savedMistakes.length; }
+    else fx.classList.add("hidden");
+
+    if(perfect){ confetti(200); sFan(); }
+    else if(correctCount>=total*0.7){ confetti(140); sFan(); }
+    paintStart();
+  }
+
+  // ---------- Ton-Umschalter ----------
+  function paintSound(){ $("soundBtn").textContent=soundOn?"🔊":"🔈"; $("soundBtn").setAttribute("aria-pressed",soundOn?"true":"false"); }
+  $("soundBtn").addEventListener("click",()=>{ soundOn=!soundOn; set(KS,soundOn?"1":"0"); paintSound(); if(soundOn) sClick(); });
+
+  // ---------- Startseite-Knöpfe ----------
+  function goHome(){ location.href = get("hub-url","index.html"); }
+  $("homeBtn").addEventListener("click",goHome);
+  $("homeBtn2").addEventListener("click",goHome);
+
+  // ---------- Buttons ----------
+  $("startBtn").addEventListener("click",()=>{ sClick(); startGame(null); });
+  $("trainBtn").addEventListener("click",()=>{ sClick(); startGame(savedMistakes); });
+  $("nextBtn").addEventListener("click",next);
+  $("againBtn").addEventListener("click",()=>{ sClick(); startGame(null); });
+  $("fixBtn").addEventListener("click",()=>{ sClick(); startGame(savedMistakes); });
+  $("readBtn").addEventListener("click",()=>{ const idx=queue[pos]; if(idx!=null) speak(QUESTIONS[idx].q); });
+
+  // ---------- Start ----------
+  paintSound();
+  paintStart();
+})();
+</script>
+</body>
+</html>
